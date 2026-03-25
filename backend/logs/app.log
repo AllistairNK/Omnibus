@@ -65,3 +65,4 @@
 2026-03-25 10:41:23 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
 2026-03-25 10:41:23 | INFO     | app.core.middleware:dispatch:50 - Response: GET /health status=200 duration=0.001s
 2026-03-25 10:41:23 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-25 10:56:52 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)

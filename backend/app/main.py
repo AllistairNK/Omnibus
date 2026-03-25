@@ -22,6 +22,28 @@ def create_application() -> FastAPI:
         docs_url="/docs" if settings.DEBUG else None,
         redoc_url="/redoc" if settings.DEBUG else None,
         openapi_url="/openapi.json" if settings.DEBUG else None,
+        openapi_tags=[
+            {
+                "name": "health",
+                "description": "Health check endpoints for monitoring",
+            },
+            {
+                "name": "auth",
+                "description": "Authentication and authorization endpoints",
+            },
+            {
+                "name": "users",
+                "description": "User profile management endpoints",
+            },
+            {
+                "name": "api-keys",
+                "description": "API key management for third-party services",
+            },
+            {
+                "name": "documents",
+                "description": "Document metadata management endpoints",
+            },
+        ],
     )
 
     # Set up CORS

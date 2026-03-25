@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = "change-this-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ENCRYPTION_KEY: str = ""
 
     # File upload
     MAX_UPLOAD_SIZE_MB: int = 100
