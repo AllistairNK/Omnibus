@@ -4,7 +4,7 @@
 This document tracks the implementation progress of the AI Chatbot with RAG project. Use this to mark completed tasks, track blockers, and monitor overall progress against the implementation plan.
 
 **Last Updated**: 2026-03-25
-**Overall Progress**: 55% (Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 3.1, 3.2 & 3.3 Completed)
+**Overall Progress**: 61% (Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3 & 4.1 Completed)
 
 ## Progress Summary
 
@@ -58,7 +58,7 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
   - [x] Create performance benchmarking baseline
 
 ### Phase 2: Backend Core (Week 3-4) - RAG Foundation
-**Status**: In Progress (9/18 tasks)
+**Status**: In Progress (10/18 tasks)
 **Target Completion**: Week 4
 **Blockers**: None
 
@@ -85,12 +85,12 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
   - [x] Write integration tests for vector operations
 
 #### Week 4: Chat & RAG Integration
-- [ ] **Task 4.1**: Chat Endpoints (0/5 subtasks)
-  - [ ] Create chat session management (create, list, delete)
-  - [ ] Implement message storage (role, content, metadata)
-  - [ ] Build basic LLM integration endpoint (no RAG yet)
-  - [ ] Add streaming response support (Server-Sent Events)
-  - [ ] Write tests for chat flow and message persistence
+- [x] **Task 4.1**: Chat Endpoints (5/5 subtasks)
+  - [x] Create chat session management (create, list, delete)
+  - [x] Implement message storage (role, content, metadata)
+  - [x] Build basic LLM integration endpoint (no RAG yet)
+  - [x] Add streaming response support (Server-Sent Events)
+  - [x] Write tests for chat flow and message persistence
 
 - [ ] **Task 4.2**: RAG Implementation (0/5 subtasks)
   - [ ] Implement context retrieval from ChromaDB
@@ -278,9 +278,16 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
 
 ### Week 4 Report (Target: 2026-04-22)
 **Planned**: Chat endpoints, RAG implementation, multi-model support
-**Actual**: Not started
+**Actual**: Task 4.1 (Chat Endpoints) completed
 **Blockers**: None
 **Notes**: 
+- Task 4.1: Implemented chat session management endpoints (create, list, update, delete chats)
+- Implemented message storage endpoints with role validation (user, assistant, system)
+- Built basic LLM integration endpoint using OpenAI API with temperature and token controls
+- Added streaming response support using Server-Sent Events (SSE) for real-time responses
+- Wrote comprehensive tests for chat flow and message persistence
+- Created LLM service abstraction for future multi-model support
+- Updated API router to include chat endpoints at `/api/v1/chats` 
 
 ### Week 5 Report (Target: 2026-04-29)
 **Planned**: Angular setup, auth UI, terminal foundation

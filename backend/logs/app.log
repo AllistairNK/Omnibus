@@ -142,3 +142,29 @@
 2026-03-25 14:09:34 | INFO     | logging:callHandlers:1706 - Created new collection: user_test-user-integration_documents with 1536 dimensions
 2026-03-25 14:09:34 | INFO     | logging:callHandlers:1706 - Added 2 chunks for document test-doc-1 to vector store
 2026-03-25 14:09:34 | INFO     | logging:callHandlers:1706 - Deleted 2 chunks for document test-doc-1
+2026-03-25 14:35:51 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 14:35:52 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/chats/ status=201 duration=0.008s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/chats/ "HTTP/1.1 201 Created"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: GET /api/v1/chats/ status=200 duration=0.004s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/api/v1/chats/?page=1&page_size=20 "HTTP/1.1 200 OK"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: GET /api/v1/chats/test-chat-id status=200 duration=0.003s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/api/v1/chats/test-chat-id "HTTP/1.1 200 OK"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: GET /api/v1/chats/non-existent-id status=404 duration=0.002s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/api/v1/chats/non-existent-id "HTTP/1.1 404 Not Found"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: PUT /api/v1/chats/test-chat-id status=200 duration=0.005s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: PUT http://testserver/api/v1/chats/test-chat-id "HTTP/1.1 200 OK"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: DELETE /api/v1/chats/test-chat-id status=204 duration=0.004s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: DELETE http://testserver/api/v1/chats/test-chat-id "HTTP/1.1 204 No Content"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: DELETE /api/v1/chats/non-existent-id status=404 duration=0.001s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: DELETE http://testserver/api/v1/chats/non-existent-id "HTTP/1.1 404 Not Found"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/chats/test-chat-id/messages status=201 duration=0.004s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/chats/test-chat-id/messages "HTTP/1.1 201 Created"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/chats/test-chat-id/messages status=400 duration=0.002s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/chats/test-chat-id/messages "HTTP/1.1 400 Bad Request"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: GET /api/v1/chats/test-chat-id/messages status=200 duration=0.004s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/api/v1/chats/test-chat-id/messages?page=1&page_size=50 "HTTP/1.1 200 OK"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: GET /api/v1/chats/test-chat-id/messages/test-message-id status=200 duration=0.003s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/api/v1/chats/test-chat-id/messages/test-message-id "HTTP/1.1 200 OK"
+2026-03-25 14:35:52 | INFO     | app.core.middleware:dispatch:50 - Response: DELETE /api/v1/chats/test-chat-id/messages/test-message-id status=204 duration=0.004s
+2026-03-25 14:35:52 | INFO     | logging:callHandlers:1706 - HTTP Request: DELETE http://testserver/api/v1/chats/test-chat-id/messages/test-message-id "HTTP/1.1 204 No Content"

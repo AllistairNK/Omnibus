@@ -3,7 +3,7 @@ API v1 router definition.
 """
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import health, auth, users, api_keys, documents
+from app.api.v1.endpoints import health, auth, users, api_keys, documents, chats
 
 api_router = APIRouter()
 
@@ -17,3 +17,5 @@ api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(api_keys.router, prefix="/api-keys", tags=["api-keys"])
 # Include documents router
 api_router.include_router(documents.router, prefix="/documents", tags=["documents"])
+# Include chats router
+api_router.include_router(chats.router, prefix="/chats", tags=["chats"])
