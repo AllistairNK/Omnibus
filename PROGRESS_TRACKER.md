@@ -4,12 +4,12 @@
 This document tracks the implementation progress of the AI Chatbot with RAG project. Use this to mark completed tasks, track blockers, and monitor overall progress against the implementation plan.
 
 **Last Updated**: 2026-03-25
-**Overall Progress**: 7% (Task 1.1 Completed)
+**Overall Progress**: 14% (Tasks 1.1 & 1.2 Completed)
 
 ## Progress Summary
 
 ### Phase 1: Foundation (Week 1-2) - Backend First
-**Status**: In Progress (1/15 tasks)
+**Status**: In Progress (2/15 tasks)
 **Target Completion**: Week 2
 **Blockers**: None
 
@@ -21,12 +21,12 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
   - [x] Configure Git hooks (pre-commit, pre-push)
   - [x] Set up CI/CD pipeline skeleton (GitHub Actions)
 
-- [ ] **Task 1.2**: Backend Foundation (0/5 subtasks)
-  - [ ] Create FastAPI skeleton with health check endpoint (`/health`)
-  - [ ] Implement configuration management (pydantic-settings)
-  - [ ] Set up logging and error handling middleware
-  - [ ] Create database connection pool (asyncpg)
-  - [ ] Write initial pytest setup with TestClient
+- [x] **Task 1.2**: Backend Foundation (5/5 subtasks)
+  - [x] Create FastAPI skeleton with health check endpoint (`/health`)
+  - [x] Implement configuration management (pydantic-settings)
+  - [x] Set up logging and error handling middleware
+  - [x] Create database connection pool (asyncpg)
+  - [x] Write initial pytest setup with TestClient
 
 - [ ] **Task 1.3**: Supabase Integration (0/5 subtasks)
   - [ ] Set up Supabase project and obtain credentials
@@ -257,7 +257,7 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
 
 ### Week 1 Report (Target: 2026-04-01)
 **Planned**: Repository setup, FastAPI skeleton, Supabase integration
-**Actual**: Repository & environment setup completed (Task 1.1). FastAPI skeleton and Supabase integration pending.
+**Actual**: Repository & environment setup completed (Task 1.1). FastAPI skeleton completed (Task 1.2). Supabase integration pending.
 **Blockers**: None
 **Notes**: Monorepo structure created, Python virtual environment with pyproject.toml, Angular 18 project initialized, Git hooks configured, CI/CD pipeline skeleton set up.
 
