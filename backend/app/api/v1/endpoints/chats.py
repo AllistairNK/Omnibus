@@ -88,6 +88,9 @@ class ChatCompletionRequest(BaseModel):
     temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0, description="Sampling temperature")
     max_tokens: Optional[int] = Field(1000, ge=1, le=4000, description="Maximum tokens to generate")
     stream: Optional[bool] = Field(False, description="Whether to stream the response")
+    use_rag: Optional[bool] = Field(True, description="Whether to use RAG for context-aware responses")
+    include_sources: Optional[bool] = Field(True, description="Whether to include source attribution in response")
+    rag_method: Optional[str] = Field("auto", description="RAG method: auto, custom, langchain")
 
 
 class ChatCompletionResponse(BaseModel):
@@ -98,6 +101,10 @@ class ChatCompletionResponse(BaseModel):
     content: str
     model: Optional[str] = None
     tokens_used: Optional[int] = None
+    context_used: Optional[bool] = Field(False, description="Whether context was used in generation")
+    context_document_count: Optional[int] = Field(0, description="Number of context documents used")
+    sources: Optional[List[Dict[str, Any]]] = Field(default_factory=list, description="Source documents used")
+    rag_method: Optional[str] = Field(None, description="RAG method used")
     timestamp: str
 
 
@@ -809,31 +816,80 @@ async def create_chat_completion(
         
         supabase._client.table("messages").insert(user_message_data).execute()
         
-        # Prepare messages for LLM
-        llm_messages = previous_messages + [
-            {"role": "user", "content": completion_request.message}
-        ]
-        
-        # Get LLM response
-        llm_response = await llm_service.chat_completion(
-            messages=llm_messages,
-            model=completion_request.model,
-            temperature=completion_request.temperature,
-            max_tokens=completion_request.max_tokens,
-            stream=False,  # Non-streaming for this endpoint
-        )
+        # Get LLM response (with or without RAG)
+        if completion_request.use_rag:
+            from app.services.rag_service import rag_service
+            
+            # Initialize RAG service if needed
+            if not rag_service.llm_service._initialized:
+                await rag_service.llm_service.initialize()
+            
+            # Generate RAG response
+            if completion_request.rag_method == "langchain":
+                rag_response = await rag_service.generate_with_langchain(
+                    user_id=current_user["id"],
+                    query=completion_request.message,
+                    chat_history=previous_messages,
+                    model=completion_request.model,
+                    temperature=completion_request.temperature
+                )
+            else:
+                rag_response = await rag_service.generate_rag_response(
+                    user_id=current_user["id"],
+                    query=completion_request.message,
+                    chat_history=previous_messages,
+                    model=completion_request.model,
+                    temperature=completion_request.temperature,
+                    max_tokens=completion_request.max_tokens,
+                    include_sources=completion_request.include_sources,
+                    prompt_strategy="auto" if completion_request.rag_method == "auto" else "basic"
+                )
+            
+            response_content = rag_response["content"]
+            tokens_used = rag_response["tokens_used"]
+            model_used = rag_response["model"]
+            context_used = rag_response["context_used"]
+            context_document_count = rag_response["context_document_count"]
+            sources = rag_response["sources"]
+            rag_method = rag_response.get("method", "custom_rag")
+            
+            # Store sources in metadata
+            metadata = {"sources": sources, "rag_method": rag_method}
+            
+        else:
+            # Basic LLM response (no RAG)
+            llm_messages = previous_messages + [
+                {"role": "user", "content": completion_request.message}
+            ]
+            
+            llm_response = await llm_service.chat_completion(
+                messages=llm_messages,
+                model=completion_request.model,
+                temperature=completion_request.temperature,
+                max_tokens=completion_request.max_tokens,
+                stream=False,
+            )
+            
+            response_content = llm_response["content"]
+            tokens_used = llm_response.get("tokens_used")
+            model_used = llm_response.get("model")
+            context_used = False
+            context_document_count = 0
+            sources = []
+            rag_method = None
+            metadata = {}
         
         # Save assistant response
         assistant_message_id = str(uuid.uuid4())
         assistant_message_data = {
             "id": assistant_message_id,
             "chat_id": chat_id,
-            "role": llm_response["role"],
-            "content": llm_response["content"],
+            "role": "assistant",
+            "content": response_content,
             "timestamp": datetime.utcnow().isoformat(),
-            "metadata": {},
-            "tokens_used": llm_response.get("tokens_used"),
-            "model": llm_response.get("model"),
+            "metadata": metadata,
+            "tokens_used": tokens_used,
+            "model": model_used,
         }
         
         supabase._client.table("messages").insert(assistant_message_data).execute()
@@ -847,11 +903,15 @@ async def create_chat_completion(
         return {
             "chat_id": chat_id,
             "message_id": assistant_message_id,
-            "role": llm_response["role"],
-            "content": llm_response["content"],
-            "model": llm_response.get("model"),
-            "tokens_used": llm_response.get("tokens_used"),
+            "role": "assistant",
+            "content": response_content,
+            "model": model_used,
+            "tokens_used": tokens_used,
             "timestamp": assistant_message_data["timestamp"],
+            "context_used": context_used,
+            "context_document_count": context_document_count,
+            "sources": sources,
+            "rag_method": rag_method,
         }
     except HTTPException:
         raise
