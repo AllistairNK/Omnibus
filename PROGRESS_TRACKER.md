@@ -4,7 +4,7 @@
 This document tracks the implementation progress of the AI Chatbot with RAG project. Use this to mark completed tasks, track blockers, and monitor overall progress against the implementation plan.
 
 **Last Updated**: 2026-03-25
-**Overall Progress**: 45% (Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 2.3 & 3.1 Completed)
+**Overall Progress**: 50% (Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 3.1 & 3.2 Completed)
 
 ## Progress Summary
 
@@ -58,7 +58,7 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
   - [x] Create performance benchmarking baseline
 
 ### Phase 2: Backend Core (Week 3-4) - RAG Foundation
-**Status**: In Progress (5/18 tasks)
+**Status**: In Progress (6/18 tasks)
 **Target Completion**: Week 4
 **Blockers**: None
 
@@ -70,12 +70,12 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
   - [x] Create document metadata tracking in database
   - [x] Write tests for upload validation and error cases
 
-- [ ] **Task 3.2**: Document Processing (0/5 subtasks)
-  - [ ] Implement document parsing (PyPDF2, python-docx, plain text)
-  - [ ] Create text extraction and cleaning utilities
-  - [ ] Build chunking strategy (semantic, fixed-size, overlap)
-  - [ ] Add chunk metadata tracking (document_id, chunk_index, etc.)
-  - [ ] Write unit tests for parsing and chunking logic
+- [x] **Task 3.2**: Document Processing (5/5 subtasks)
+  - [x] Implement document parsing (PyPDF2, python-docx, plain text)
+  - [x] Create text extraction and cleaning utilities
+  - [x] Build chunking strategy (semantic, fixed-size, overlap)
+  - [x] Add chunk metadata tracking (document_id, chunk_index, etc.)
+  - [x] Write unit tests for parsing and chunking logic
 
 - [ ] **Task 3.3**: ChromaDB Integration (0/5 subtasks)
   - [ ] Set up ChromaDB instance (local/docker)
@@ -269,9 +269,11 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
 
 ### Week 3 Report (Target: 2026-04-15)
 **Planned**: Document processing, ChromaDB integration
-**Actual**: Task 3.1 (File Upload & Storage) completed
+**Actual**: Task 3.1 (File Upload & Storage) completed. Task 3.2 (Document Processing) completed.
 **Blockers**: None
-**Notes**: Implemented document upload endpoint with multipart/form-data support, file validation for PDF/TXT/DOCX/MD with size limits, Supabase Storage integration, document metadata tracking, and comprehensive tests. The upload endpoint validates file types (pdf, txt, docx, md) and size (100MB limit), stores files in Supabase Storage "documents" bucket, creates metadata records in database, and handles error cases. Also updated delete endpoint to remove files from storage. 
+**Notes**:
+- Task 3.1: Implemented document upload endpoint with multipart/form-data support, file validation for PDF/TXT/DOCX/MD with size limits, Supabase Storage integration, document metadata tracking, and comprehensive tests.
+- Task 3.2: Implemented document parsing utilities (PyPDF2 for PDF, python-docx for DOCX, plain text for TXT/MD), text extraction and cleaning utilities, multiple chunking strategies (fixed-size, paragraph-based, sentence-based, hybrid), chunk metadata tracking with database schema migration, and comprehensive unit tests. Created DocumentProcessor service that orchestrates the complete document processing pipeline.
 
 ### Week 4 Report (Target: 2026-04-22)
 **Planned**: Chat endpoints, RAG implementation, multi-model support
