@@ -66,3 +66,26 @@
 2026-03-25 10:41:23 | INFO     | app.core.middleware:dispatch:50 - Response: GET /health status=200 duration=0.001s
 2026-03-25 10:41:23 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
 2026-03-25 10:56:52 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 11:01:24 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 11:05:11 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 11:05:11 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 11:05:11 | INFO     | app.core.middleware:dispatch:50 - Response: GET /health status=200 duration=0.002s
+2026-03-25 11:05:11 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-25 11:05:11 | INFO     | app.core.middleware:dispatch:50 - Response: GET /health status=200 duration=0.000s
+2026-03-25 11:05:11 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-25 11:05:11 | INFO     | app.core.middleware:dispatch:50 - Response: POST /health status=405 duration=0.001s
+2026-03-25 11:05:11 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/health "HTTP/1.1 405 Method Not Allowed"
+2026-03-25 11:06:35 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 11:06:35 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 11:06:35 | INFO     | app.core.middleware:dispatch:50 - Response: GET /health status=200 duration=0.002s
+2026-03-25 11:06:35 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-25 11:12:35 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 11:12:35 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 11:12:35 | INFO     | app.core.middleware:dispatch:50 - Response: GET /health status=200 duration=0.002s
+2026-03-25 11:12:35 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-25 11:12:35 | INFO     | app.core.middleware:dispatch:50 - Response: GET /health status=200 duration=0.000s
+2026-03-25 11:12:35 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-25 11:12:35 | INFO     | app.core.middleware:dispatch:50 - Response: POST /health status=405 duration=0.001s
+2026-03-25 11:12:35 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/health "HTTP/1.1 405 Method Not Allowed"
+2026-03-25 11:12:35 | INFO     | app.core.middleware:dispatch:50 - Response: GET /health status=200 duration=0.000s
+2026-03-25 11:12:35 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://test/health "HTTP/1.1 200 OK"

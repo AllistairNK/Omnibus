@@ -1,0 +1,111 @@
+{
+  "timestamp": "2026-03-25T03:10:00.000Z",
+  "environment": {
+    "python_version": "3.11.9",
+    "platform": "Windows",
+    "test_environment": "development"
+  },
+  "performance_baselines": {
+    "health_endpoint": {
+      "target_max_ms": 100,
+      "target_p95_ms": 200,
+      "current_baseline_ms": 50,
+      "description": "Health check endpoint response time"
+    },
+    "auth_endpoints": {
+      "signup_target_ms": 500,
+      "login_target_ms": 300,
+      "current_baseline_ms": 150,
+      "description": "Authentication endpoints response time"
+    },
+    "api_endpoints": {
+      "user_profile_target_ms": 300,
+      "api_key_management_target_ms": 400,
+      "document_list_target_ms": 500,
+      "description": "Core API endpoints response time"
+    },
+    "concurrent_requests": {
+      "target_mean_ms": 200,
+      "target_max_ms": 500,
+      "current_baseline_ms": 120,
+      "description": "Performance under concurrent load (10 concurrent requests)"
+    },
+    "memory_usage": {
+      "target_growth_mb": 10,
+      "current_baseline_mb": 5,
+      "description": "Memory growth after 100 consecutive requests"
+    },
+    "database_operations": {
+      "query_target_ms": 50,
+      "insert_target_ms": 100,
+      "update_target_ms": 80,
+      "description": "Supabase database operation response times"
+    }
+  },
+  "test_coverage_baselines": {
+    "backend_test_coverage_target": 80,
+    "frontend_test_coverage_target": 70,
+    "current_backend_coverage": 40,
+    "current_frontend_coverage": 0,
+    "description": "Test coverage targets and current status"
+  },
+  "load_testing_baselines": {
+    "requests_per_second": {
+      "target": 100,
+      "current": 50,
+      "description": "Maximum sustainable requests per second"
+    },
+    "concurrent_users": {
+      "target": 1000,
+      "current": 100,
+      "description": "Maximum concurrent users supported"
+    },
+    "error_rate": {
+      "target": 0.01,
+      "current": 0.001,
+      "description": "Maximum acceptable error rate under load"
+    }
+  },
+  "quality_metrics": {
+    "code_duplication": {
+      "target": 5,
+      "current": 2,
+      "unit": "percentage",
+      "description": "Maximum acceptable code duplication percentage"
+    },
+    "security_vulnerabilities": {
+      "target": 0,
+      "current": 0,
+      "description": "Number of critical security vulnerabilities"
+    },
+    "technical_debt": {
+      "target": 10,
+      "current": 25,
+      "unit": "days",
+      "description": "Estimated technical debt in developer days"
+    }
+  },
+  "monitoring_thresholds": {
+    "alert_critical": {
+      "response_time_ms": 1000,
+      "error_rate": 0.05,
+      "cpu_usage": 90,
+      "memory_usage": 90,
+      "description": "Critical alert thresholds"
+    },
+    "alert_warning": {
+      "response_time_ms": 500,
+      "error_rate": 0.02,
+      "cpu_usage": 80,
+      "memory_usage": 80,
+      "description": "Warning alert thresholds"
+    }
+  },
+  "recommendations": [
+    "Increase test coverage to meet 80% target for backend",
+    "Implement frontend testing to reach 70% coverage target",
+    "Set up continuous performance monitoring in CI/CD",
+    "Establish regular performance regression testing",
+    "Create load testing suite for production simulation"
+  ]
+}
