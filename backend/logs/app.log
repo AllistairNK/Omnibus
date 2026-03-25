@@ -7,3 +7,24 @@
 2026-03-25 10:14:07 | INFO     | app.core.middleware:dispatch:46 - Response: POST /health status=405 duration=0.001s
 2026-03-25 10:14:07 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/health "HTTP/1.1 405 Method Not Allowed"
 2026-03-25 10:15:51 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 10:25:42 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 10:25:43 | WARNING  | logging:callHandlers:1706 - Supabase credentials not configured. Set SUPABASE_URL and SUPABASE_KEY environment variables.
+2026-03-25 10:25:43 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 10:25:43 | WARNING  | logging:callHandlers:1706 - Supabase credentials not configured. Set SUPABASE_URL and SUPABASE_KEY environment variables.
+2026-03-25 10:25:43 | ERROR    | logging:callHandlers:1706 - Sign up failed: Supabase client not initialized. Check credentials.
+2026-03-25 10:25:43 | ERROR    | logging:callHandlers:1706 - Sign in failed: Supabase client not initialized. Check credentials.
+2026-03-25 10:25:43 | ERROR    | logging:callHandlers:1706 - File upload failed: Supabase client not initialized. Check credentials.
+2026-03-25 10:25:43 | ERROR    | logging:callHandlers:1706 - Insert failed: Supabase client not initialized. Check credentials.
+2026-03-25 10:25:43 | ERROR    | logging:callHandlers:1706 - Select failed: Supabase client not initialized. Check credentials.
+2026-03-25 10:25:43 | ERROR    | logging:callHandlers:1706 - Update failed: Supabase client not initialized. Check credentials.
+2026-03-25 10:25:43 | ERROR    | logging:callHandlers:1706 - Delete failed: Supabase client not initialized. Check credentials.
+2026-03-25 10:25:43 | ERROR    | logging:callHandlers:1706 - Failed to get current user: Supabase client not initialized. Check credentials.
+2026-03-25 10:25:43 | ERROR    | logging:callHandlers:1706 - Sign out failed: Supabase client not initialized. Check credentials.
+2026-03-25 10:27:28 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 10:27:29 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 10:27:29 | INFO     | logging:callHandlers:1706 - Found 2 migration files
+2026-03-25 10:27:29 | INFO     | logging:callHandlers:1706 - Migrations table ensured
+2026-03-25 10:27:29 | INFO     | logging:callHandlers:1706 - Running migration: 001_test.sql
+2026-03-25 10:27:29 | INFO     | logging:callHandlers:1706 - Migration 001_test.sql completed successfully
+2026-03-25 10:27:29 | INFO     | logging:callHandlers:1706 - Running migration: 001_failing.sql
+2026-03-25 10:27:29 | ERROR    | logging:callHandlers:1706 - Migration 001_failing.sql failed: SQL syntax error
