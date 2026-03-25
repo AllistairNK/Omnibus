@@ -99,6 +99,25 @@ class SupabaseClient:
             logger.error(f"Failed to get current user: {e}")
             return None
 
+    # Password reset methods
+    async def reset_password_for_email(self, email: str) -> Dict[str, Any]:
+        """Send password reset email to user."""
+        try:
+            response = self.client.auth.reset_password_for_email(email)
+            return response
+        except Exception as e:
+            logger.error(f"Password reset request failed: {e}")
+            raise
+
+    async def update_user_password(self, new_password: str) -> Dict[str, Any]:
+        """Update current user's password (requires authenticated session)."""
+        try:
+            response = self.client.auth.update_user({"password": new_password})
+            return response
+        except Exception as e:
+            logger.error(f"Password update failed: {e}")
+            raise
+
     # Storage methods
     async def upload_file(
         self,

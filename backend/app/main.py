@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
-from app.core.middleware import RequestLoggingMiddleware
+from app.core.middleware import RequestLoggingMiddleware, AuthenticationMiddleware
 
 
 def create_application() -> FastAPI:
@@ -36,6 +36,7 @@ def create_application() -> FastAPI:
 
     # Add custom middleware
     app.add_middleware(RequestLoggingMiddleware)
+    app.add_middleware(AuthenticationMiddleware)
 
     # Include API router
     app.include_router(api_router, prefix=settings.API_V1_STR)

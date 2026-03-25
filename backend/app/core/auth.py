@@ -1,0 +1,130 @@
+"""
+Authentication and authorization utilities for Supabase JWT.
+"""
+import logging
+from typing import Optional, Dict, Any
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError, jwt
+from pydantic import BaseModel
+
+from app.core.config import settings
+from app.core.supabase import SupabaseClient
+
+logger = logging.getLogger(__name__)
+
+security = HTTPBearer(auto_error=False)
+
+
+class TokenData(BaseModel):
+    """Data extracted from JWT token."""
+    sub: str  # user ID
+    email: str
+    role: Optional[str] = None
+    app_metadata: Optional[Dict[str, Any]] = None
+    user_metadata: Optional[Dict[str, Any]] = None
+
+
+async def verify_token(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> TokenData:
+    """
+    Verify Supabase JWT token and return token data.
+
+    Args:
+        credentials: HTTP Bearer token from Authorization header.
+
+    Returns:
+        TokenData: Decoded token data.
+
+    Raises:
+        HTTPException: If token is missing or invalid.
+    """
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authorization token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = credentials.credentials
+
+    try:
+        # Decode token using Supabase JWT secret
+        payload = jwt.decode(
+            token,
+            settings.SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            options={"verify_aud": False},  # Supabase tokens may not have aud
+        )
+        # Validate required fields
+        sub = payload.get("sub")
+        email = payload.get("email")
+        if sub is None or email is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+            )
+
+        return TokenData(
+            sub=sub,
+            email=email,
+            role=payload.get("role"),
+            app_metadata=payload.get("app_metadata"),
+            user_metadata=payload.get("user_metadata"),
+        )
+    except JWTError as e:
+        logger.warning(f"JWT validation failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+async def get_current_user(
+    token_data: TokenData = Depends(verify_token),
+) -> Dict[str, Any]:
+    """
+    Get current user from token data and optionally fetch from Supabase.
+
+    Args:
+        token_data: Verified token data.
+
+    Returns:
+        Dict containing user information.
+    """
+    # For now, return token data as user.
+    # In the future, we could fetch additional user details from Supabase.
+    return {
+        "id": token_data.sub,
+        "email": token_data.email,
+        "role": token_data.role,
+        "app_metadata": token_data.app_metadata,
+        "user_metadata": token_data.user_metadata,
+    }
+
+
+async def get_current_active_user(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """
+    Get current active user (no additional checks for now).
+    Could be extended to check if user is banned, etc.
+    """
+    return current_user
+
+
+async def require_admin(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """
+    Require admin role for the endpoint.
+    """
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+    return current_user

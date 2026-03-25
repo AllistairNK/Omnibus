@@ -2,12 +2,16 @@
 Custom middleware for request logging and error handling.
 """
 import time
-from typing import Callable
+from typing import Callable, Optional
 
 from fastapi import Request, Response
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError, jwt
 from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
+
+from app.core.config import settings
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -77,3 +81,44 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                     "detail": str(exc) if request.app.debug else None,
                 },
             )
+
+
+class AuthenticationMiddleware(BaseHTTPMiddleware):
+    """Middleware for JWT authentication and user attachment."""
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        """Process request with authentication."""
+        # Extract token from Authorization header
+        auth_header = request.headers.get("Authorization")
+        token = None
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+
+        user = None
+        if token:
+            try:
+                # Decode token using Supabase JWT secret
+                payload = jwt.decode(
+                    token,
+                    settings.SUPABASE_JWT_SECRET,
+                    algorithms=["HS256"],
+                    options={"verify_aud": False},
+                )
+                sub = payload.get("sub")
+                email = payload.get("email")
+                if sub and email:
+                    user = {
+                        "id": sub,
+                        "email": email,
+                        "role": payload.get("role"),
+                        "app_metadata": payload.get("app_metadata"),
+                        "user_metadata": payload.get("user_metadata"),
+                    }
+            except JWTError:
+                # Invalid token - treat as no authentication
+                pass
+
+        # Attach user to request state
+        request.state.user = user
+
+        return await call_next(request)
