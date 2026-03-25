@@ -89,3 +89,37 @@
 2026-03-25 11:12:35 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/health "HTTP/1.1 405 Method Not Allowed"
 2026-03-25 11:12:35 | INFO     | app.core.middleware:dispatch:50 - Response: GET /health status=200 duration=0.000s
 2026-03-25 11:12:35 | INFO     | logging:callHandlers:1706 - HTTP Request: GET http://test/health "HTTP/1.1 200 OK"
+2026-03-25 11:23:02 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 11:23:02 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 11:23:02 | WARNING  | logging:callHandlers:1706 - JWT validation failed: Not enough segments
+2026-03-25 11:23:02 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/documents/upload status=401 duration=0.008s
+2026-03-25 11:23:02 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/documents/upload "HTTP/1.1 401 Unauthorized"
+2026-03-25 11:23:02 | WARNING  | logging:callHandlers:1706 - JWT validation failed: Not enough segments
+2026-03-25 11:23:02 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/documents/upload status=401 duration=0.234s
+2026-03-25 11:23:02 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/documents/upload "HTTP/1.1 401 Unauthorized"
+2026-03-25 11:23:02 | WARNING  | logging:callHandlers:1706 - JWT validation failed: Not enough segments
+2026-03-25 11:23:02 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/documents/upload status=401 duration=0.003s
+2026-03-25 11:23:02 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/documents/upload "HTTP/1.1 401 Unauthorized"
+2026-03-25 11:23:02 | WARNING  | logging:callHandlers:1706 - JWT validation failed: Not enough segments
+2026-03-25 11:23:02 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/documents/upload status=401 duration=0.002s
+2026-03-25 11:23:02 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/documents/upload "HTTP/1.1 401 Unauthorized"
+2026-03-25 11:23:02 | WARNING  | logging:callHandlers:1706 - JWT validation failed: Not enough segments
+2026-03-25 11:23:02 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/documents/upload status=401 duration=0.003s
+2026-03-25 11:23:02 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/documents/upload "HTTP/1.1 401 Unauthorized"
+2026-03-25 11:23:02 | WARNING  | logging:callHandlers:1706 - JWT validation failed: Not enough segments
+2026-03-25 11:23:02 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/documents/upload status=401 duration=0.003s
+2026-03-25 11:23:02 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/documents/upload "HTTP/1.1 401 Unauthorized"
+2026-03-25 11:23:02 | WARNING  | logging:callHandlers:1706 - JWT validation failed: Not enough segments
+2026-03-25 11:23:02 | INFO     | app.core.middleware:dispatch:50 - Response: DELETE /api/v1/documents/doc_123 status=401 duration=0.002s
+2026-03-25 11:23:02 | INFO     | logging:callHandlers:1706 - HTTP Request: DELETE http://testserver/api/v1/documents/doc_123 "HTTP/1.1 401 Unauthorized"
+2026-03-25 11:23:02 | WARNING  | logging:callHandlers:1706 - JWT validation failed: Not enough segments
+2026-03-25 11:23:02 | INFO     | app.core.middleware:dispatch:50 - Response: DELETE /api/v1/documents/doc_123 status=401 duration=0.001s
+2026-03-25 11:23:02 | INFO     | logging:callHandlers:1706 - HTTP Request: DELETE http://testserver/api/v1/documents/doc_123 "HTTP/1.1 401 Unauthorized"
+2026-03-25 11:24:20 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 11:24:20 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 11:24:20 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/documents/upload status=401 duration=0.008s
+2026-03-25 11:24:20 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/documents/upload "HTTP/1.1 401 Unauthorized"
+2026-03-25 11:29:35 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 11:29:35 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 11:29:35 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/documents/upload status=401 duration=0.007s
+2026-03-25 11:29:35 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/documents/upload "HTTP/1.1 401 Unauthorized"

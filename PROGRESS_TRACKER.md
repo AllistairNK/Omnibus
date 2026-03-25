@@ -4,12 +4,12 @@
 This document tracks the implementation progress of the AI Chatbot with RAG project. Use this to mark completed tasks, track blockers, and monitor overall progress against the implementation plan.
 
 **Last Updated**: 2026-03-25
-**Overall Progress**: 40% (Tasks 1.1, 1.2, 1.3, 2.1, 2.2 & 2.3 Completed)
+**Overall Progress**: 45% (Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 2.3 & 3.1 Completed)
 
 ## Progress Summary
 
 ### Phase 1: Foundation (Week 1-2) - Backend First
-**Status**: In Progress (6/15 tasks)
+**Status**: Completed (6/6 tasks, 30/30 subtasks)
 **Target Completion**: Week 2
 **Blockers**: None
 
@@ -58,17 +58,17 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
   - [x] Create performance benchmarking baseline
 
 ### Phase 2: Backend Core (Week 3-4) - RAG Foundation
-**Status**: Not Started (0/18 tasks)
+**Status**: In Progress (5/18 tasks)
 **Target Completion**: Week 4
 **Blockers**: None
 
 #### Week 3: Document Processing Pipeline
-- [ ] **Task 3.1**: File Upload & Storage (0/5 subtasks)
-  - [ ] Implement document upload endpoint (multipart/form-data)
-  - [ ] Add file validation (PDF, TXT, DOCX, size limits)
-  - [ ] Integrate with Supabase Storage for file persistence
-  - [ ] Create document metadata tracking in database
-  - [ ] Write tests for upload validation and error cases
+- [x] **Task 3.1**: File Upload & Storage (5/5 subtasks)
+  - [x] Implement document upload endpoint (multipart/form-data)
+  - [x] Add file validation (PDF, TXT, DOCX, size limits)
+  - [x] Integrate with Supabase Storage for file persistence
+  - [x] Create document metadata tracking in database
+  - [x] Write tests for upload validation and error cases
 
 - [ ] **Task 3.2**: Document Processing (0/5 subtasks)
   - [ ] Implement document parsing (PyPDF2, python-docx, plain text)
@@ -269,9 +269,9 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
 
 ### Week 3 Report (Target: 2026-04-15)
 **Planned**: Document processing, ChromaDB integration
-**Actual**: Not started
+**Actual**: Task 3.1 (File Upload & Storage) completed
 **Blockers**: None
-**Notes**: 
+**Notes**: Implemented document upload endpoint with multipart/form-data support, file validation for PDF/TXT/DOCX/MD with size limits, Supabase Storage integration, document metadata tracking, and comprehensive tests. The upload endpoint validates file types (pdf, txt, docx, md) and size (100MB limit), stores files in Supabase Storage "documents" bucket, creates metadata records in database, and handles error cases. Also updated delete endpoint to remove files from storage. 
 
 ### Week 4 Report (Target: 2026-04-22)
 **Planned**: Chat endpoints, RAG implementation, multi-model support

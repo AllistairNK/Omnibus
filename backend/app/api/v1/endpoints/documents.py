@@ -3,12 +3,15 @@ Document metadata endpoints for managing uploaded documents.
 Note: This handles metadata only, not file upload/processing (Task 3.1).
 """
 import logging
+import os
+import uuid
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
+from app.core.config import settings
 from app.core.supabase import SupabaseClient
 
 router = APIRouter()
@@ -197,6 +200,130 @@ async def create_document(
         )
 
 
+@router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
+async def upload_document(
+    file: UploadFile = File(...),
+    metadata: Optional[str] = Form(None),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """
+    Upload a document file.
+    
+    Handles file upload with validation, stores in Supabase Storage,
+    and creates document metadata record.
+    """
+    try:
+        supabase = SupabaseClient()
+        if not supabase._client:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Supabase client not initialized",
+            )
+        
+        # Get user ID
+        response = supabase._client.auth.get_user(current_user["access_token"])
+        user_id = response.user.id
+        
+        # Validate file size
+        max_size_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+        file_content = await file.read()
+        file_size = len(file_content)
+        
+        if file_size > max_size_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File size exceeds maximum limit of {settings.MAX_UPLOAD_SIZE_MB}MB",
+            )
+        
+        # Validate file type
+        filename = file.filename
+        if not filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Filename is required",
+            )
+        
+        file_ext = filename.split('.')[-1].lower() if '.' in filename else ''
+        if file_ext not in settings.ALLOWED_FILE_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File type '{file_ext}' not allowed. Allowed types: {', '.join(settings.ALLOWED_FILE_TYPES)}",
+            )
+        
+        # Generate unique file path
+        file_id = str(uuid.uuid4())
+        storage_path = f"documents/{user_id}/{file_id}.{file_ext}"
+        
+        # Upload to Supabase Storage
+        try:
+            # Use the storage bucket "documents" (should be created in Supabase)
+            await supabase.upload_file(
+                bucket="documents",
+                path=storage_path,
+                file_content=file_content,
+                file_type=file.content_type or "application/octet-stream",
+            )
+        except Exception as e:
+            logger.error(f"Failed to upload file to Supabase Storage: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to upload file to storage",
+            )
+        
+        # Parse metadata if provided
+        metadata_dict = {}
+        if metadata:
+            try:
+                import json
+                metadata_dict = json.loads(metadata)
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid metadata JSON: {metadata}")
+                metadata_dict = {"raw_metadata": metadata}
+        
+        # Create document metadata record
+        doc_data = {
+            "user_id": user_id,
+            "filename": filename,
+            "file_path": storage_path,
+            "file_size": file_size,
+            "file_type": file_ext,
+            "status": "uploaded",
+            "metadata": metadata_dict,
+        }
+        
+        result = supabase._client.table("documents").insert(doc_data).execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create document metadata",
+            )
+        
+        created_doc = result.data[0]
+        
+        return {
+            "id": created_doc["id"],
+            "user_id": created_doc["user_id"],
+            "filename": created_doc["filename"],
+            "file_path": created_doc.get("file_path"),
+            "file_size": created_doc.get("file_size"),
+            "file_type": created_doc.get("file_type"),
+            "uploaded_at": created_doc["uploaded_at"],
+            "processed_at": created_doc.get("processed_at"),
+            "chunk_count": created_doc.get("chunk_count", 0),
+            "status": created_doc.get("status", "uploaded"),
+            "metadata": created_doc.get("metadata", {}),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading document: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload document",
+        )
+
+
 @router.get("/{document_id}", response_model=DocumentResponse)
 async def get_document(
     document_id: str,
@@ -374,6 +501,17 @@ async def delete_document(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Document not found",
             )
+        
+        doc = existing.data[0]
+        file_path = doc.get("file_path")
+        
+        # Delete file from Supabase Storage if path exists
+        if file_path:
+            try:
+                await supabase.delete_file(bucket="documents", path=file_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete file from storage: {e}")
+                # Continue with metadata deletion even if storage deletion fails
         
         # Delete the document (cascade will delete related chunks)
         supabase._client.table("documents").delete().eq("id", document_id).eq("user_id", user_id).execute()
