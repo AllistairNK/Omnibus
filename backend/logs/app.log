@@ -124,3 +124,21 @@
 2026-03-25 11:29:35 | INFO     | app.core.middleware:dispatch:50 - Response: POST /api/v1/documents/upload status=401 duration=0.007s
 2026-03-25 11:29:35 | INFO     | logging:callHandlers:1706 - HTTP Request: POST http://testserver/api/v1/documents/upload "HTTP/1.1 401 Unauthorized"
 2026-03-25 11:43:34 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 14:03:31 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 14:03:37 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 14:03:38 | INFO     | logging:callHandlers:1706 - Added 3 chunks for document doc1 to vector store
+2026-03-25 14:03:38 | INFO     | logging:callHandlers:1706 - Deleted 2 chunks for document doc1
+2026-03-25 14:03:38 | INFO     | logging:callHandlers:1706 - Created new collection: user_test-user-integration_documents with 1536 dimensions
+2026-03-25 14:03:38 | INFO     | logging:callHandlers:1706 - Added 2 chunks for document test-doc-1 to vector store
+2026-03-25 14:03:38 | INFO     | logging:callHandlers:1706 - Deleted 2 chunks for document test-doc-1
+2026-03-25 14:05:27 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 14:05:29 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 14:07:42 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 14:07:44 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 14:09:33 | INFO     | app.core.logging:configure_logging:67 - Logging configured for AI Chatbot Backend (development)
+2026-03-25 14:09:34 | WARNING  | app.core.database:connect:25 - DATABASE_URL not set, database connections disabled
+2026-03-25 14:09:34 | INFO     | logging:callHandlers:1706 - Added 3 chunks for document doc1 to vector store
+2026-03-25 14:09:34 | INFO     | logging:callHandlers:1706 - Deleted 2 chunks for document doc1
+2026-03-25 14:09:34 | INFO     | logging:callHandlers:1706 - Created new collection: user_test-user-integration_documents with 1536 dimensions
+2026-03-25 14:09:34 | INFO     | logging:callHandlers:1706 - Added 2 chunks for document test-doc-1 to vector store
+2026-03-25 14:09:34 | INFO     | logging:callHandlers:1706 - Deleted 2 chunks for document test-doc-1
