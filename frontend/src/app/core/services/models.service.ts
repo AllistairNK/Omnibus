@@ -217,4 +217,43 @@ export class ModelsService {
   getModelComparison(): Observable<ModelInfo[]> {
     return of(this.models);
   }
+
+  /**
+   * Get the current active model ID
+   */
+  getCurrentModel(): Observable<string> {
+    // In a real app, this would come from user preferences or localStorage
+    const savedModel = localStorage.getItem('currentModel') || 'gpt-4';
+    return of(savedModel);
+  }
+
+  /**
+   * Set the current active model
+   */
+  setCurrentModel(modelId: string): Observable<boolean> {
+    // Validate model exists
+    const model = this.models.find(m => m.id === modelId);
+    if (!model) {
+      return of(false);
+    }
+    
+    // Save to localStorage (in a real app, this would be saved to backend)
+    localStorage.setItem('currentModel', modelId);
+    
+    // Also update in-memory state
+    this.currentModel = modelId;
+    
+    return of(true);
+  }
+
+
+
+  /**
+   * Get all available model IDs
+   */
+  getAvailableModelIds(): Observable<string[]> {
+    return of(this.models.map(m => m.id));
+  }
+
+  private currentModel: string = 'gpt-4';
 }

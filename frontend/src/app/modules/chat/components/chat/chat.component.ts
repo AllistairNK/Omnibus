@@ -1,5 +1,6 @@
 import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { ChatService, ChatMessage, ChatCompletionRequest } from '../../../../core/services/chat.service';
+import { CommandParserService, CommandResult } from '../../../../core/services/command-parser.service';
 import { Subscription } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 @Component({
@@ -26,6 +27,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   streamingResponse = '';
   private streamSubscription?: Subscription;
   
+  // Command suggestions
+  commandSuggestions: string[] = [];
+  showSuggestions = false;
+  selectedSuggestionIndex = -1;
+  
   // RAG Configuration
   showRagSettings = false;
   ragConfig = {
@@ -37,7 +43,10 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     highlightMatches: true
   };
 
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    private commandParser: CommandParserService
+  ) {}
 
   ngOnInit() {
     // Initialize with some command history
@@ -90,17 +99,40 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.isTyping = true;
       this.streamingResponse = '';
       
-      // Handle commands locally
+      // Handle commands locally using command parser
       if (messageContent.startsWith('/')) {
-        setTimeout(() => {
-          this.isTyping = false;
-          const response = this.handleCommand(messageContent);
-          this.messages.push({
-            role: 'assistant',
-            content: response,
-            timestamp: new Date().toISOString()
-          });
-        }, 500);
+        this.isTyping = true;
+        
+        this.commandParser.parseAndExecute(messageContent, {
+          component: this,
+          messages: this.messages,
+          clearMessages: () => this.messages = []
+        }).subscribe({
+          next: (result: CommandResult) => {
+            this.isTyping = false;
+            
+            // Handle special commands that modify UI state
+            if (messageContent.toLowerCase() === '/clear' || messageContent.toLowerCase() === '/cls') {
+              this.messages = [];
+            }
+            
+            // Add assistant response
+            this.messages.push({
+              role: 'assistant',
+              content: result.message,
+              timestamp: new Date().toISOString(),
+              metadata: { commandResult: result }
+            });
+          },
+          error: (error) => {
+            this.isTyping = false;
+            this.messages.push({
+              role: 'assistant',
+              content: `Error executing command: ${error.message}`,
+              timestamp: new Date().toISOString()
+            });
+          }
+        });
         return;
       }
       
@@ -233,14 +265,44 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       }
     } else if (event.key === 'Tab') {
       event.preventDefault();
-      // Simple autocomplete for commands
+      // Enhanced autocomplete using command parser
       if (this.newMessage.startsWith('/')) {
-        const commands = ['/help', '/clear', '/model', '/documents', '/about'];
-        const matching = commands.find(cmd => cmd.startsWith(this.newMessage));
-        if (matching) {
-          this.newMessage = matching;
+        const completed = this.commandParser.autocomplete(this.newMessage);
+        if (completed !== this.newMessage) {
+          this.newMessage = completed;
+          this.updateCommandSuggestions();
+        } else {
+          // Show suggestions if multiple matches
+          this.updateCommandSuggestions();
+          if (this.commandSuggestions.length > 0) {
+            this.showSuggestions = true;
+            this.selectedSuggestionIndex = 0;
+          }
         }
       }
+    } else if (event.key === 'Escape') {
+      // Hide suggestions
+      this.showSuggestions = false;
+      this.selectedSuggestionIndex = -1;
+    } else if (event.key === 'Enter' && this.showSuggestions && this.selectedSuggestionIndex >= 0) {
+      // Apply selected suggestion
+      event.preventDefault();
+      this.applySuggestion(this.selectedSuggestionIndex);
+    } else if (event.key === 'ArrowRight' && this.showSuggestions && this.selectedSuggestionIndex >= 0) {
+      // Apply selected suggestion
+      event.preventDefault();
+      this.applySuggestion(this.selectedSuggestionIndex);
+    } else if (event.key === 'ArrowUp' && this.showSuggestions) {
+      // Navigate suggestions
+      event.preventDefault();
+      this.selectPreviousSuggestion();
+    } else if (event.key === 'ArrowDown' && this.showSuggestions) {
+      // Navigate suggestions
+      event.preventDefault();
+      this.selectNextSuggestion();
+    } else {
+      // Update suggestions as user types
+      this.updateCommandSuggestions();
     }
   }
 
@@ -330,6 +392,53 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       } catch (e) {
         console.error('Failed to parse saved RAG settings:', e);
       }
+    }
+  }
+
+  /**
+   * Update command suggestions based on current input
+   */
+  updateCommandSuggestions(): void {
+    if (this.newMessage.startsWith('/')) {
+      this.commandSuggestions = this.commandParser.getSuggestions(this.newMessage);
+      this.showSuggestions = this.commandSuggestions.length > 0;
+    } else {
+      this.commandSuggestions = [];
+      this.showSuggestions = false;
+    }
+    this.selectedSuggestionIndex = -1;
+  }
+
+  /**
+   * Apply a command suggestion
+   */
+  applySuggestion(index: number): void {
+    if (index >= 0 && index < this.commandSuggestions.length) {
+      this.newMessage = this.commandSuggestions[index];
+      this.showSuggestions = false;
+      this.selectedSuggestionIndex = -1;
+    }
+  }
+
+  /**
+   * Select next suggestion
+   */
+  selectNextSuggestion(): void {
+    if (this.commandSuggestions.length > 0) {
+      this.selectedSuggestionIndex = 
+        (this.selectedSuggestionIndex + 1) % this.commandSuggestions.length;
+    }
+  }
+
+  /**
+   * Select previous suggestion
+   */
+  selectPreviousSuggestion(): void {
+    if (this.commandSuggestions.length > 0) {
+      this.selectedSuggestionIndex = 
+        this.selectedSuggestionIndex <= 0 
+          ? this.commandSuggestions.length - 1 
+          : this.selectedSuggestionIndex - 1;
     }
   }
 }

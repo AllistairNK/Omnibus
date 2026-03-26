@@ -14,6 +14,7 @@ interface ChartData {
   styleUrls: ['./usage-analytics.component.scss']
 })
 export class UsageAnalyticsComponent implements OnInit {
+  protected readonly Object = Object; 
   analytics?: UsageAnalytics;
   isLoading = false;
   selectedTimeRange: '7d' | '30d' | '90d' = '7d';
