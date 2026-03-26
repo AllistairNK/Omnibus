@@ -7,9 +7,9 @@
 @include mat.core();
 
 // Define the terminal theme palette
-$terminal-primary: mat.define-palette(mat.$green-palette, 700, 500, 900);
-$terminal-accent: mat.define-palette(mat.$cyan-palette, A200, A100, A400);
-$terminal-warn: mat.define-palette(mat.$red-palette);
+$terminal-primary: mat.m2-define-palette(mat.$m2-green-palette, 700, 500, 900);
+$terminal-accent: mat.m2-define-palette(mat.$m2-cyan-palette, A200, A100, A400);
+$terminal-warn: mat.m2-define-palette(mat.$m2-red-palette);
 
 $terminal-theme: mat.define-dark-theme((
   color: (

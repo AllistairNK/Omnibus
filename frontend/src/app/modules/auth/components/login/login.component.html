@@ -29,14 +29,18 @@
           </mat-error>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" type="submit" class="full-width" [disabled]="!loginForm.valid">
-          Login
+        <button mat-raised-button color="primary" type="submit" class="full-width" [disabled]="!loginForm.valid || isLoading">
+          <span *ngIf="!isLoading">Login</span>
+          <span *ngIf="isLoading">
+            <mat-spinner diameter="20" class="spinner"></mat-spinner>
+            Logging in...
+          </span>
         </button>
       </form>
     </mat-card-content>
     <mat-card-actions>
       <a routerLink="/auth/register" mat-button>Create an account</a>
-      <a href="#" mat-button>Forgot password?</a>
+      <a routerLink="/auth/forgot-password" mat-button>Forgot password?</a>
     </mat-card-actions>
   </mat-card>
 </div>

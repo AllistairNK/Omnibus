@@ -6,6 +6,74 @@
     </mat-card-header>
     <mat-card-content>
       <mat-tab-group [(selectedIndex)]="selectedTab">
+        <mat-tab label="Profile">
+          <form [formGroup]="profileForm" class="tab-content" (ngSubmit)="saveProfile()">
+            <div class="row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="firstName">
+                <mat-error *ngIf="profileForm.get('firstName')?.hasError('required')">
+                  First name is required
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="lastName">
+                <mat-error *ngIf="profileForm.get('lastName')?.hasError('required')">
+                  Last name is required
+                </mat-error>
+              </mat-form-field>
+            </div>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" type="email">
+              <mat-icon matSuffix>email</mat-icon>
+              <mat-error *ngIf="profileForm.get('email')?.hasError('required')">
+                Email is required
+              </mat-error>
+              <mat-error *ngIf="profileForm.get('email')?.hasError('email')">
+                Please enter a valid email
+              </mat-error>
+            </mat-form-field>
+
+            <h3>Change Password</h3>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Current Password</mat-label>
+              <input matInput type="password" formControlName="currentPassword">
+            </mat-form-field>
+            
+            <div class="row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>New Password</mat-label>
+                <input matInput type="password" formControlName="newPassword">
+                <mat-error *ngIf="profileForm.get('newPassword')?.hasError('minlength')">
+                  Password must be at least 8 characters
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Confirm Password</mat-label>
+                <input matInput type="password" formControlName="confirmPassword">
+                <mat-error *ngIf="profileForm.hasError('mismatch')">
+                  Passwords do not match
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="button-group">
+              <button mat-raised-button color="primary" type="submit" [disabled]="!profileForm.valid || isLoading">
+                <span *ngIf="!isLoading">Save Profile</span>
+                <span *ngIf="isLoading">
+                  <mat-spinner diameter="20" class="spinner"></mat-spinner>
+                  Saving...
+                </span>
+              </button>
+              <button mat-button type="button" (click)="changePassword()" [disabled]="isLoading">
+                Change Password Only
+              </button>
+            </div>
+          </form>
+        </mat-tab>
         <mat-tab label="General">
           <form [formGroup]="settingsForm" class="tab-content">
             <mat-form-field appearance="outline" class="full-width">
@@ -49,10 +117,19 @@
       </mat-tab-group>
     </mat-card-content>
     <mat-card-actions>
-      <button mat-button (click)="selectedTab = 0">Previous</button>
-      <button mat-button (click)="selectedTab = 1">Next</button>
+      <button mat-button (click)="selectedTab = selectedTab > 0 ? selectedTab - 1 : 0" [disabled]="selectedTab === 0">
+        Previous
+      </button>
+      <button mat-button (click)="selectedTab = selectedTab < 2 ? selectedTab + 1 : 2" [disabled]="selectedTab === 2">
+        Next
+      </button>
       <span style="flex: 1"></span>
-      <button mat-raised-button color="primary" (click)="saveSettings()">Save Settings</button>
+      <button *ngIf="selectedTab === 0" mat-raised-button color="primary" (click)="saveProfile()" [disabled]="isLoading">
+        Save Profile
+      </button>
+      <button *ngIf="selectedTab === 1 || selectedTab === 2" mat-raised-button color="primary" (click)="saveSettings()" [disabled]="isLoading">
+        Save Settings
+      </button>
     </mat-card-actions>
   </mat-card>
 </div>

@@ -63,8 +63,12 @@
           </mat-error>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" type="submit" class="full-width" [disabled]="!registerForm.valid">
-          Create Account
+        <button mat-raised-button color="primary" type="submit" class="full-width" [disabled]="!registerForm.valid || isLoading">
+          <span *ngIf="!isLoading">Create Account</span>
+          <span *ngIf="isLoading">
+            <mat-spinner diameter="20" class="spinner"></mat-spinner>
+            Creating account...
+          </span>
         </button>
       </form>
     </mat-card-content>
