@@ -1,30 +1,48 @@
-import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, OnDestroy } from '@angular/core';
+import { ChatService, ChatMessage, ChatCompletionRequest } from '../../../../core/services/chat.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss']
 })
-export class ChatComponent implements OnInit, AfterViewChecked {
+export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('terminalOutput') private terminalOutput!: ElementRef;
 
-  messages = [
-    { sender: 'bot', text: 'Hello! I am your AI assistant. How can I help you today?', timestamp: new Date() },
-    { sender: 'user', text: 'Tell me about RAG.', timestamp: new Date() },
-    { sender: 'bot', text: 'RAG stands for Retrieval-Augmented Generation. It combines retrieval of relevant documents with generative AI to produce accurate, context-aware responses.', timestamp: new Date() }
+  messages: ChatMessage[] = [
+    { role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you today?', timestamp: new Date().toISOString() },
+    { role: 'user', content: 'Tell me about RAG.', timestamp: new Date().toISOString() },
+    { role: 'assistant', content: 'RAG stands for Retrieval-Augmented Generation. It combines retrieval of relevant documents with generative AI to produce accurate, context-aware responses.', timestamp: new Date().toISOString() }
   ];
   newMessage = '';
   isTyping = false;
   messageHistory: string[] = [];
   historyIndex = -1;
+  currentChatId: string | null = null;
+  streamingResponse = '';
+  private streamSubscription?: Subscription;
+
+  constructor(private chatService: ChatService) {}
 
   ngOnInit() {
     // Initialize with some command history
     this.messageHistory = ['/help', 'Tell me about RAG', 'What is vector search?'];
+    
+    // Create a new chat session or load existing one
+    this.createOrLoadChat();
   }
 
   ngAfterViewChecked() {
     this.scrollToBottom();
+  }
+
+  ngOnDestroy() {
+    // Clean up subscriptions
+    if (this.streamSubscription) {
+      this.streamSubscription.unsubscribe();
+    }
+    this.chatService.closeStream();
   }
 
   scrollToBottom(): void {
@@ -35,35 +53,118 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     } catch(err) { }
   }
 
-  sendMessage() {
+  async sendMessage() {
     if (this.newMessage.trim()) {
       // Add to history
       this.messageHistory.unshift(this.newMessage);
       this.historyIndex = -1;
       
       // Add user message
-      this.messages.push({ sender: 'user', text: this.newMessage, timestamp: new Date() });
-      const userMessage = this.newMessage;
+      const userMessage: ChatMessage = {
+        role: 'user',
+        content: this.newMessage,
+        timestamp: new Date().toISOString()
+      };
+      this.messages.push(userMessage);
+      const messageContent = this.newMessage;
       this.newMessage = '';
       
       // Show typing indicator
       this.isTyping = true;
+      this.streamingResponse = '';
       
-      // Simulate bot response after a delay
-      setTimeout(() => {
-        this.isTyping = false;
-        let response = '';
+      // Handle commands locally
+      if (messageContent.startsWith('/')) {
+        setTimeout(() => {
+          this.isTyping = false;
+          const response = this.handleCommand(messageContent);
+          this.messages.push({
+            role: 'assistant',
+            content: response,
+            timestamp: new Date().toISOString()
+          });
+        }, 500);
+        return;
+      }
+      
+      // Send to backend with streaming
+      const request: ChatCompletionRequest = {
+        message: messageContent,
+        chat_id: this.currentChatId || undefined,
+        model: 'gpt-4',
+        stream: true,
+        use_rag: true,
+        include_sources: true
+      };
+      
+      try {
+        // Use the async generator for streaming
+        const stream = this.chatService.streamMessage(request);
+        let fullResponse = '';
         
-        // Handle commands
-        if (userMessage.startsWith('/')) {
-          response = this.handleCommand(userMessage);
-        } else {
-          // Generate a simulated response based on input
-          response = this.generateResponse(userMessage);
+        for await (const token of stream) {
+          this.streamingResponse += token;
+          fullResponse += token;
+          
+          // Update the UI with the streaming response
+          this.updateStreamingResponse(fullResponse);
         }
         
-        this.messages.push({ sender: 'bot', text: response, timestamp: new Date() });
-      }, 1000 + Math.random() * 1000);
+        // Streaming complete
+        this.isTyping = false;
+        this.streamingResponse = '';
+        this.messages.push({
+          role: 'assistant',
+          content: fullResponse,
+          timestamp: new Date().toISOString()
+        });
+        
+      } catch (error) {
+        console.error('Error in chat completion:', error);
+        this.isTyping = false;
+        this.streamingResponse = '';
+        
+        // Fallback to simulated response
+        setTimeout(() => {
+          const response = this.generateResponse(messageContent);
+          this.messages.push({
+            role: 'assistant',
+            content: response,
+            timestamp: new Date().toISOString()
+          });
+        }, 1000);
+      }
+    }
+  }
+
+  private updateStreamingResponse(response: string) {
+    // Remove any existing streaming message
+    const lastMessage = this.messages[this.messages.length - 1];
+    if (lastMessage.role === 'assistant' && lastMessage.metadata?.streaming) {
+      this.messages[this.messages.length - 1] = {
+        ...lastMessage,
+        content: response
+      };
+    } else {
+      // Add new streaming message
+      this.messages.push({
+        role: 'assistant',
+        content: response,
+        timestamp: new Date().toISOString(),
+        metadata: { streaming: true }
+      });
+    }
+  }
+
+  private async createOrLoadChat() {
+    try {
+      // For now, create a new chat session
+      // In a real app, you might load the most recent chat
+      const response = await this.chatService.createChat('New Chat', 'gpt-4').toPromise();
+      this.currentChatId = response.id;
+    } catch (error) {
+      console.error('Error creating chat session:', error);
+      // Continue without chat ID (messages won't be persisted)
     }
   }
 

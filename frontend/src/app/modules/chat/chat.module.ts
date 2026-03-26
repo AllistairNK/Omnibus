@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ChatRoutingModule } from './chat-routing.module';
 import { ChatComponent } from './components/chat/chat.component';
+import { ChatHistorySidebarComponent } from './components/chat-history-sidebar/chat-history-sidebar.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,7 +13,8 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
-    ChatComponent
+    ChatComponent,
+    ChatHistorySidebarComponent
   ],
   imports: [
     CommonModule,
@@ -25,6 +27,9 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
     MatIconModule,
     MatListModule,
     FormsModule
+  ],
+  exports: [
+    ChatHistorySidebarComponent
   ]
 })
 export class ChatModule { }

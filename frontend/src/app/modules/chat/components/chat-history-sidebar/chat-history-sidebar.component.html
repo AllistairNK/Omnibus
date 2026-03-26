@@ -1,0 +1,100 @@
+<div class="chat-history-sidebar" [class.open]="isOpen" [class.closed]="!isOpen">
+  <!-- Sidebar Header -->
+  <div class="sidebar-header">
+    <h3 class="sidebar-title">
+      <span class="terminal-icon">📁</span>
+      Chat History
+    </h3>
+    <button class="toggle-button" (click)="toggleSidebar()" [title]="isOpen ? 'Collapse sidebar' : 'Expand sidebar'">
+      {{ isOpen ? '◀' : '▶' }}
+    </button>
+  </div>
+
+  <!-- Sidebar Content -->
+  <div class="sidebar-content" *ngIf="isOpen">
+    <!-- New Chat Button -->
+    <button class="new-chat-button" (click)="createNewChat()">
+      <span class="button-icon">+</span>
+      New Chat
+    </button>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <span>Loading chats...</span>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-state">
+      <span class="error-icon">⚠</span>
+      <span>{{ error }}</span>
+      <button class="retry-button" (click)="loadChats()">Retry</button>
+    </div>
+
+    <!-- Chat List -->
+    <div *ngIf="!loading && !error" class="chat-list">
+      <div *ngFor="let chat of chats" 
+           class="chat-item" 
+           [class.selected]="selectedChatId === chat.id"
+           (click)="selectChat(chat.id)">
+        
+        <div class="chat-item-header">
+          <span class="chat-title">{{ chat.title || 'Untitled Chat' }}</span>
+          <button class="delete-button" (click)="deleteChat(chat.id, $event)" title="Delete chat">
+            ×
+          </button>
+        </div>
+        
+        <div class="chat-item-details">
+          <span class="chat-model" *ngIf="chat.model_used">
+            {{ chat.model_used }}
+          </span>
+          <span class="chat-date">
+            {{ formatDate(chat.updated_at) }}
+          </span>
+        </div>
+        
+        <div class="chat-item-footer">
+          <span class="message-count">
+            {{ chat.message_count || 0 }} messages
+          </span>
+          <span class="chat-status" *ngIf="selectedChatId === chat.id">
+            ● Active
+          </span>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="chats.length === 0" class="empty-state">
+        <span class="empty-icon">💬</span>
+        <p>No chat history yet</p>
+        <p class="empty-hint">Start a new conversation to see it here</p>
+      </div>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <div class="stats">
+        <span class="stat-item">
+          <span class="stat-label">Total:</span>
+          <span class="stat-value">{{ chats.length }} chats</span>
+        </span>
+        <span class="stat-item">
+          <span class="stat-label">Active:</span>
+          <span class="stat-value">{{ selectedChatId ? '1' : '0' }}</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collapsed State -->
+  <div *ngIf="!isOpen" class="sidebar-collapsed">
+    <button class="toggle-button" (click)="toggleSidebar()" title="Expand sidebar">
+      ▶
+    </button>
+    <div class="collapsed-hint">
+      <span class="hint-icon">💬</span>
+      <span class="hint-text">{{ chats.length }}</span>
+    </div>
+  </div>
+</div>

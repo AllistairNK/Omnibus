@@ -42,14 +42,17 @@ export class AuthService {
   }
 
   private setToken(token: string): void {
+    if (typeof localStorage === 'undefined') return; 
     localStorage.setItem(this.TOKEN_KEY, token);
   }
 
   private getToken(): string | null {
+    if (typeof localStorage === 'undefined') return null;  
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
   private removeToken(): void {
+    if (typeof localStorage === 'undefined') return;   
     localStorage.removeItem(this.TOKEN_KEY);
   }
 

@@ -31,15 +31,27 @@
       
       <!-- Chat messages in terminal format -->
       <div *ngFor="let msg of messages" class="terminal-line">
-        <span class="prompt" [class.user-prompt]="msg.sender === 'user'" [class.bot-prompt]="msg.sender === 'bot'">
-          {{ msg.sender === 'user' ? 'user&#64;chatbot:~$' : 'ai&#64;assistant:~$' }}
+        <span class="prompt" [class.user-prompt]="msg.role === 'user'" [class.bot-prompt]="msg.role === 'assistant'">
+          {{ msg.role === 'user' ? 'user&#64;chatbot:~$' : 'ai&#64;assistant:~$' }}
         </span>
-        <span class="message-content">{{ msg.text }}</span>
-        <span class="timestamp">[{{ msg.timestamp | date:'HH:mm:ss' }}]</span>
+        <span class="message-content">{{ msg.content }}</span>
+        <div class="message-metadata">
+          <span class="timestamp">[{{ msg.timestamp | date:'HH:mm:ss' }}]</span>
+          <span *ngIf="msg.tokens_used" class="token-count">{{ msg.tokens_used }} tokens</span>
+          <span *ngIf="msg.model" class="model-info">{{ msg.model }}</span>
+          <span *ngIf="msg.metadata?.streaming" class="streaming-badge">streaming</span>
+        </div>
+      </div>
+      
+      <!-- Streaming response (if any) -->
+      <div *ngIf="streamingResponse" class="terminal-line">
+        <span class="prompt bot-prompt">ai&#64;assistant:~$</span>
+        <span class="message-content streaming">{{ streamingResponse }}</span>
+        <span class="cursor">█</span>
       </div>
       
       <!-- Cursor for typing indicator -->
-      <div *ngIf="isTyping" class="terminal-line">
+      <div *ngIf="isTyping && !streamingResponse" class="terminal-line">
         <span class="prompt bot-prompt">ai&#64;assistant:~$</span>
         <span class="typing-indicator">
           <span class="typing-dot"></span>

@@ -1,4 +1,5 @@
 /* Terminal Interface Foundation - Task 5.3 */
+/* Enhanced with Task 6.1: Real-time Chat Interface */
 .terminal-container {
   font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
   background: #0a0a0a;
@@ -82,21 +83,75 @@
 
 .user-prompt {
   color: #00ff00;
+  font-weight: bold;
 }
 
 .bot-prompt {
   color: #00aaff;
+  font-weight: bold;
 }
 
 .message-content {
   color: #ffffff;
+  margin-left: 10px;
+  word-break: break-word;
+  padding: 8px 12px;
+  border-radius: 6px;
+  max-width: 80%;
+  display: inline-block;
+}
+
+/* User message bubble */
+.terminal-line:has(.user-prompt) .message-content {
+  background: rgba(0, 255, 0, 0.1);
+  border-left: 3px solid #00ff00;
+  margin-left: 15px;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Bot message bubble */
+.terminal-line:has(.bot-prompt) .message-content {
+  background: rgba(0, 170, 255, 0.1);
+  border-left: 3px solid #00aaff;
+  margin-left: 15px;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.message-metadata {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: 10px;
+  float: right;
+  font-size: 11px;
 }
 
 .timestamp {
   color: #888888;
-  font-size: 12px;
-  margin-left: 10px;
-  float: right;
+}
+
+.token-count {
+  color: #ffaa00;
+  background: rgba(255, 170, 0, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.model-info {
+  color: #aa55ff;
+  background: rgba(170, 85, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.streaming-badge {
+  color: #00ffaa;
+  background: rgba(0, 255, 170, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  animation: pulse 1.5s infinite;
 }
 
 /* Typing Indicator */
@@ -259,4 +314,73 @@
     flex-wrap: wrap;
     gap: 10px;
   }
+}
+
+/* Task 6.1: Streaming and Typing Animations */
+.streaming {
+  color: #00ffaa;
+  animation: pulse 1.5s infinite;
+}
+
+.cursor {
+  display: inline-block;
+  color: #00ff00;
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* Enhanced typing indicator */
+.typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #00ff00;
+  animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Message bubble enhancements */
+.message-content {
+  transition: all 0.3s ease;
+}
+
+.message-content.streaming {
+  border-right: 2px solid #00ffaa;
+  padding-right: 5px;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 170, 0.1));
 }
