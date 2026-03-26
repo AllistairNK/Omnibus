@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -23,7 +23,8 @@ import { ReactiveFormsModule } from '@angular/forms';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatListModule
+    MatListModule,
+    FormsModule
   ]
 })
 export class ChatModule { }

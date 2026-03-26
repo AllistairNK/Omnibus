@@ -1,26 +1,81 @@
-<div class="chat-container">
-  <mat-card class="chat-card">
-    <mat-card-header>
-      <mat-card-title>AI Chatbot Terminal</mat-card-title>
-      <mat-card-subtitle>Ask questions and get RAG-powered answers</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="messages-container">
-        <div *ngFor="let msg of messages" class="message" [class.user]="msg.sender === 'user'" [class.bot]="msg.sender === 'bot'">
-          <div class="message-sender">{{ msg.sender === 'user' ? 'You' : 'AI Assistant' }}</div>
-          <div class="message-text">{{ msg.text }}</div>
-          <div class="message-time">{{ msg.timestamp | date:'shortTime' }}</div>
-        </div>
+<div class="terminal-container">
+  <!-- ASCII Art Header -->
+  <div class="ascii-art">
+    <pre class="ascii-text">
+    █████╗ ██╗     ███████╗███████╗██╗██████╗ ███████╗██████╗ 
+   ██╔══██╗██║     ██╔════╝██╔════╝██║██╔══██╗██╔════╝██╔══██╗
+   ███████║██║     █████╗  ███████╗██║██████╔╝█████╗  ██████╔╝
+   ██╔══██║██║     ██╔══╝  ╚════██║██║██╔═══╝ ██╔══╝  ██╔══██╗
+   ██║  ██║███████╗███████╗███████║██║██║     ███████╗██║  ██║
+   ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝
+    </pre>
+    <div class="terminal-header">
+      <span class="prompt-symbol">$</span> AI Chatbot Terminal v1.0 | Type <span class="command">/help</span> for commands
+    </div>
+  </div>
+
+  <!-- Terminal Body -->
+  <div class="terminal-body">
+    <!-- Terminal Output Area -->
+    <div class="terminal-output" #terminalOutput>
+      <!-- Welcome message -->
+      <div class="terminal-line">
+        <span class="prompt">user&#64;chatbot:~$</span> Welcome to AI Chatbot Terminal
       </div>
-      <div class="input-container">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Type your message...</mat-label>
-          <input matInput [(ngModel)]="newMessage" (keyup.enter)="sendMessage()">
-          <button mat-icon-button matSuffix (click)="sendMessage()">
-            <mat-icon>send</mat-icon>
-          </button>
-        </mat-form-field>
+      <div class="terminal-line">
+        <span class="prompt">user&#64;chatbot:~$</span> Type your questions below. Use <span class="command">/help</span> for available commands.
       </div>
-    </mat-card-content>
-  </mat-card>
+      <div class="terminal-line">
+        <span class="prompt">user&#64;chatbot:~$</span> Connected to RAG backend. Ready for queries.
+      </div>
+      
+      <!-- Chat messages in terminal format -->
+      <div *ngFor="let msg of messages" class="terminal-line">
+        <span class="prompt" [class.user-prompt]="msg.sender === 'user'" [class.bot-prompt]="msg.sender === 'bot'">
+          {{ msg.sender === 'user' ? 'user&#64;chatbot:~$' : 'ai&#64;assistant:~$' }}
+        </span>
+        <span class="message-content">{{ msg.text }}</span>
+        <span class="timestamp">[{{ msg.timestamp | date:'HH:mm:ss' }}]</span>
+      </div>
+      
+      <!-- Cursor for typing indicator -->
+      <div *ngIf="isTyping" class="terminal-line">
+        <span class="prompt bot-prompt">ai&#64;assistant:~$</span>
+        <span class="typing-indicator">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Terminal Input Area -->
+    <div class="terminal-input">
+      <div class="input-line">
+        <span class="prompt">user&#64;chatbot:~$</span>
+        <input 
+          type="text" 
+          class="terminal-input-field"
+          [(ngModel)]="newMessage"
+          (keyup.enter)="sendMessage()"
+          placeholder="Type your message or command..."
+          autofocus
+        />
+        <button class="send-button" (click)="sendMessage()" title="Send (Enter)">
+          <span class="send-icon">⏎</span>
+        </button>
+      </div>
+      <div class="input-hint">
+        Press <span class="key">Enter</span> to send, <span class="key">↑</span>/<span class="key">↓</span> for history, <span class="key">Tab</span> for autocomplete
+      </div>
+    </div>
+  </div>
+
+  <!-- Terminal Status Bar -->
+  <div class="terminal-status">
+    <span class="status-item">Mode: <span class="status-value">RAG</span></span>
+    <span class="status-item">Model: <span class="status-value">GPT-4</span></span>
+    <span class="status-item">Tokens: <span class="status-value">{{ messages.length * 42 }}</span></span>
+    <span class="status-item">Connection: <span class="status-value online">● Online</span></span>
+  </div>
 </div>
