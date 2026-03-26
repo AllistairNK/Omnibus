@@ -45,6 +45,18 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-5-nano"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    
+    # Anthropic
+    ANTHROPIC_API_KEY: str = ""
+    ANTHROPIC_MODEL: str = "claude-3-haiku-20240307"
+    
+    # Google Gemini
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-pro"
+    
+    # Multi-model settings
+    DEFAULT_LLM_PROVIDER: str = "openai"  # openai, anthropic, gemini
+    ENABLE_PROVIDER_FALLBACK: bool = True
 
     # ChromaDB
     CHROMA_HOST: str = "localhost"
