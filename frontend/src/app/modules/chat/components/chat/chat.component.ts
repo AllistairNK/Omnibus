@@ -1,8 +1,10 @@
 import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { ChatService, ChatMessage, ChatCompletionRequest } from '../../../../core/services/chat.service';
 import { CommandParserService, CommandResult } from '../../../../core/services/command-parser.service';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject, timer } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
@@ -10,6 +12,7 @@ import { firstValueFrom } from 'rxjs';
 })
 export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('terminalOutput') private terminalOutput!: ElementRef;
+  @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
 
   messages: ChatMessage[] = [
     { role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you today?', timestamp: new Date().toISOString() },
@@ -19,6 +22,18 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       { document_id: 'doc2', document_title: 'AI Research Paper.docx', chunk_text: 'RAG models outperform standard LLMs on knowledge-intensive tasks by incorporating external knowledge.', similarity_score: 0.87 }
     ]} }
   ];
+  
+  // Lazy loading properties
+  protected isLoadingMessages = false;
+  private hasMoreMessages = true;
+  private currentPage = 1;
+  private pageSize = 20;
+  private totalMessages = 0;
+  
+  // Debouncing properties
+  private inputSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+  private debounceTimeMs = 300; // 300ms debounce time
   newMessage = '';
   isTyping = false;
   messageHistory: string[] = [];
@@ -121,6 +136,12 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     
     // Load saved RAG settings
     this.loadRagSettings();
+    
+    // Load initial messages
+    this.loadMoreMessages();
+    
+    // Setup debounced input handler
+    this.setupDebouncedInput();
   }
 
   ngAfterViewChecked() {
@@ -137,6 +158,10 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     if (this.currentStreamAbortController) {
       this.currentStreamAbortController.abort();
     }
+    
+    // Clean up debouncing subjects
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -416,6 +441,94 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       console.error('Error creating chat session:', error);
       // Continue without chat ID (messages won't be persisted)
     }
+  }
+
+  /**
+   * Load more messages for lazy loading
+   */
+  private async loadMoreMessages() {
+    if (this.isLoadingMessages || !this.hasMoreMessages || !this.currentChatId) {
+      return;
+    }
+
+    this.isLoadingMessages = true;
+    
+    try {
+      const response = await firstValueFrom(
+        this.chatService.getChatMessages(this.currentChatId, this.currentPage, this.pageSize)
+      );
+      
+      // Add new messages to the beginning (since we're loading older messages)
+      this.messages = [...response.messages, ...this.messages];
+      this.totalMessages = response.total;
+      
+      // Check if we have more messages to load
+      this.hasMoreMessages = this.messages.length < this.totalMessages;
+      if (this.hasMoreMessages) {
+        this.currentPage++;
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      this.isLoadingMessages = false;
+    }
+  }
+
+  /**
+   * Handle virtual scroll index change
+   */
+  onScrollIndexChanged() {
+    if (!this.viewport) return;
+    
+    const scrollOffset = this.viewport.measureScrollOffset('top');
+    const viewportSize = this.viewport.getViewportSize();
+    const totalSize = this.viewport.getDataLength() * 50; // Approximate item height
+    
+    // Load more when scrolled near the top (for loading older messages)
+    if (scrollOffset < 100 && this.hasMoreMessages && !this.isLoadingMessages) {
+      this.loadMoreMessages();
+    }
+  }
+
+  /**
+   * Setup debounced input handler for typing
+   */
+  private setupDebouncedInput() {
+    this.inputSubject.pipe(
+      debounceTime(this.debounceTimeMs),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe((value: string) => {
+      this.onDebouncedInput(value);
+    });
+  }
+
+  /**
+   * Handle debounced input changes
+   */
+  private onDebouncedInput(value: string) {
+    // Update command suggestions based on debounced input
+    if (value.startsWith('/')) {
+      this.updateCommandSuggestions();
+    }
+    
+    // You can add more debounced operations here, such as:
+    // - Auto-save draft messages
+    // - Real-time spell checking
+    // - Search-as-you-type in document references
+    // - Typing indicator to other users (in multi-user scenarios)
+    
+    // Log for debugging (remove in production)
+    if (value.length > 0) {
+      console.debug(`Debounced input: "${value}" (after ${this.debounceTimeMs}ms)`);
+    }
+  }
+
+  /**
+   * Handle input changes with debouncing
+   */
+  onInputChange(value: string) {
+    this.inputSubject.next(value);
   }
 
   handleCommand(command: string): string {

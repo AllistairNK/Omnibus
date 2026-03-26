@@ -30,48 +30,56 @@
         <span class="prompt">user&#64;chatbot:~$</span> Connected to RAG backend. Ready for queries.
       </div>
       
-      <!-- Chat messages in terminal format -->
-      <div *ngFor="let msg of messages" class="terminal-line">
-        <span class="prompt" [class.user-prompt]="msg.role === 'user'" [class.bot-prompt]="msg.role === 'assistant'">
-          {{ msg.role === 'user' ? 'user&#64;chatbot:~$' : 'ai&#64;assistant:~$' }}
-        </span>
-        <span class="message-content">{{ msg.content }}</span>
-        <div class="message-metadata">
-          <span class="timestamp">[{{ msg.timestamp | date:'HH:mm:ss' }}]</span>
-          <span *ngIf="msg.tokens_used" class="token-count">{{ msg.tokens_used }} tokens</span>
-          <span *ngIf="msg.model" class="model-info">{{ msg.model }}</span>
-          <span *ngIf="msg.metadata?.streaming" class="streaming-badge">streaming</span>
-          <span *ngIf="getSourceCount(msg) > 0" class="source-badge" (click)="toggleSources(msg)">
-            {{ getSourceCount(msg) }} source{{ getSourceCount(msg) !== 1 ? 's' : '' }}
+      <!-- Chat messages in terminal format with virtual scrolling -->
+      <cdk-virtual-scroll-viewport #viewport class="terminal-viewport" itemSize="50" (scrolledIndexChange)="onScrollIndexChanged()">
+        <div *cdkVirtualFor="let msg of messages" class="terminal-line">
+          <span class="prompt" [class.user-prompt]="msg.role === 'user'" [class.bot-prompt]="msg.role === 'assistant'">
+            {{ msg.role === 'user' ? 'user&#64;chatbot:~$' : 'ai&#64;assistant:~$' }}
           </span>
-        </div>
-        <!-- Source citations (collapsible) -->
-        <div *ngIf="msg.showSources && getSourceCount(msg) > 0" class="source-citations">
-          <div class="source-header">
-            <span class="source-title">📚 Sources used in this response:</span>
-            <span class="source-count">{{ getSourceCount(msg) }} document{{ getSourceCount(msg) !== 1 ? 's' : '' }}</span>
+          <span class="message-content">{{ msg.content }}</span>
+          <div class="message-metadata">
+            <span class="timestamp">[{{ msg.timestamp | date:'HH:mm:ss' }}]</span>
+            <span *ngIf="msg.tokens_used" class="token-count">{{ msg.tokens_used }} tokens</span>
+            <span *ngIf="msg.model" class="model-info">{{ msg.model }}</span>
+            <span *ngIf="msg.metadata?.streaming" class="streaming-badge">streaming</span>
+            <span *ngIf="getSourceCount(msg) > 0" class="source-badge" (click)="toggleSources(msg)">
+              {{ getSourceCount(msg) }} source{{ getSourceCount(msg) !== 1 ? 's' : '' }}
+            </span>
           </div>
-          <div *ngFor="let source of getSources(msg); let i = index" class="source-item">
-            <div class="source-meta">
-              <span class="source-index">[{{ i + 1 }}]</span>
-              <span class="source-title">{{ source.document_title }}</span>
-              <div class="relevance-visualization">
-                <div class="relevance-bar">
-                  <div class="relevance-fill" [style.width.%]="source.similarity_score * 100"></div>
+          <!-- Source citations (collapsible) -->
+          <div *ngIf="msg.showSources && getSourceCount(msg) > 0" class="source-citations">
+            <div class="source-header">
+              <span class="source-title">📚 Sources used in this response:</span>
+              <span class="source-count">{{ getSourceCount(msg) }} document{{ getSourceCount(msg) !== 1 ? 's' : '' }}</span>
+            </div>
+            <div *ngFor="let source of getSources(msg); let i = index" class="source-item">
+              <div class="source-meta">
+                <span class="source-index">[{{ i + 1 }}]</span>
+                <span class="source-title">{{ source.document_title }}</span>
+                <div class="relevance-visualization">
+                  <div class="relevance-bar">
+                    <div class="relevance-fill" [style.width.%]="source.similarity_score * 100"></div>
+                  </div>
+                  <span class="source-confidence" [ngClass]="getConfidenceClass(source.similarity_score)">
+                    {{ (source.similarity_score * 100).toFixed(0) }}%
+                  </span>
                 </div>
-                <span class="source-confidence" [ngClass]="getConfidenceClass(source.similarity_score)">
-                  {{ (source.similarity_score * 100).toFixed(0) }}%
-                </span>
+              </div>
+              <div class="source-excerpt">{{ truncateText(source.chunk_text, 150) }}</div>
+              <div class="source-actions">
+                <button class="source-action" (click)="viewDocument(source.document_id)">View</button>
+                <button class="source-action" (click)="highlightInDocument(source)">Highlight</button>
               </div>
             </div>
-            <div class="source-excerpt">{{ truncateText(source.chunk_text, 150) }}</div>
-            <div class="source-actions">
-              <button class="source-action" (click)="viewDocument(source.document_id)">View</button>
-              <button class="source-action" (click)="highlightInDocument(source)">Highlight</button>
-            </div>
           </div>
         </div>
-      </div>
+        
+        <!-- Loading indicator for lazy loading -->
+        <div *ngIf="isLoadingMessages" class="loading-indicator">
+          <span class="prompt">system&#64;chatbot:~$</span>
+          <span class="message-content">Loading more messages...</span>
+        </div>
+      </cdk-virtual-scroll-viewport>
       
       <!-- Streaming response (if any) -->
       <div *ngIf="streamingResponse" class="terminal-line">
@@ -100,6 +108,7 @@
           class="terminal-input-field"
           [(ngModel)]="newMessage"
           (keyup.enter)="sendMessage()"
+          (input)="onInputChange(newMessage)"
           placeholder="Type your message or command..."
           autofocus
         />

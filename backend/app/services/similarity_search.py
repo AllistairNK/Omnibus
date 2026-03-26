@@ -6,6 +6,7 @@ and result filtering.
 import logging
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
+from functools import lru_cache
 
 from app.services.vector_store import VectorStore
 from app.services.embedding_service import EmbeddingService
@@ -23,13 +24,25 @@ class SimilaritySearchService:
     ):
         """
         Initialize similarity search service.
-        
+
         Args:
             vector_store: Vector store instance
             embedding_service: Embedding service instance
         """
         self.vector_store = vector_store or VectorStore()
         self.embedding_service = embedding_service or EmbeddingService()
+        # Initialize caches
+        self._semantic_cache = {}
+        self._semantic_cache_keys = []
+        self._hybrid_cache = {}
+        self._hybrid_cache_keys = []
+    
+    @lru_cache(maxsize=128)
+    def _get_cache_key(self, user_id: str, query: str, n_results: int, 
+                      filter_conditions: Optional[Dict[str, Any]], min_score: float) -> str:
+        """Generate a cache key for semantic search queries."""
+        filter_str = str(sorted(filter_conditions.items())) if filter_conditions else "no_filters"
+        return f"{user_id}:{query}:{n_results}:{filter_str}:{min_score}"
     
     async def semantic_search(
         self,
@@ -37,21 +50,30 @@ class SimilaritySearchService:
         query: str,
         n_results: int = 5,
         filter_conditions: Optional[Dict[str, Any]] = None,
-        min_score: float = 0.0
+        min_score: float = 0.0,
+        use_cache: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Perform semantic search using vector similarity.
-        
+
         Args:
             user_id: User ID
             query: Search query
             n_results: Number of results to return
             filter_conditions: Metadata filters
             min_score: Minimum similarity score (0-1)
-            
+            use_cache: Whether to use cached results (default: True)
+
         Returns:
             List of search results filtered by min_score
         """
+        # Check cache if enabled
+        if use_cache:
+            cache_key = self._get_cache_key(user_id, query, n_results, filter_conditions, min_score)
+            if hasattr(self, '_semantic_cache') and cache_key in self._semantic_cache:
+                logger.debug(f"Cache hit for semantic search: {cache_key}")
+                return self._semantic_cache[cache_key]
+        
         # Get raw search results
         results = await self.vector_store.search_similar(
             user_id=user_id,
@@ -67,7 +89,43 @@ class SimilaritySearchService:
         ]
         
         # Limit to requested number of results
-        return filtered_results[:n_results]
+        final_results = filtered_results[:n_results]
+        
+        # Cache the results
+        if use_cache:
+            if not hasattr(self, '_semantic_cache'):
+                self._semantic_cache = {}
+                self._semantic_cache_keys = []
+            
+            # Simple LRU cache implementation (max 128 entries)
+            if len(self._semantic_cache) >= 128:
+                # Remove oldest key
+                oldest_key = self._semantic_cache_keys.pop(0)
+                del self._semantic_cache[oldest_key]
+            
+            self._semantic_cache[cache_key] = final_results
+            self._semantic_cache_keys.append(cache_key)
+            logger.debug(f"Cached semantic search results for key: {cache_key}")
+        
+        return final_results
+    
+    def clear_semantic_cache(self):
+        """Clear the semantic search cache."""
+        self._semantic_cache.clear()
+        self._semantic_cache_keys.clear()
+        logger.info("Semantic search cache cleared")
+    
+    def clear_hybrid_cache(self):
+        """Clear the hybrid search cache."""
+        self._hybrid_cache.clear()
+        self._hybrid_cache_keys.clear()
+        logger.info("Hybrid search cache cleared")
+    
+    def clear_all_caches(self):
+        """Clear all caches."""
+        self.clear_semantic_cache()
+        self.clear_hybrid_cache()
+        logger.info("All similarity search caches cleared")
     
     async def hybrid_search(
         self,
@@ -75,26 +133,36 @@ class SimilaritySearchService:
         query: str,
         n_results: int = 5,
         semantic_weight: float = 0.7,
-        keyword_weight: float = 0.3
+        keyword_weight: float = 0.3,
+        use_cache: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Perform hybrid search combining semantic and keyword matching.
-        
+
         Args:
             user_id: User ID
             query: Search query
             n_results: Number of results to return
             semantic_weight: Weight for semantic search (0-1)
             keyword_weight: Weight for keyword search (0-1)
-            
+            use_cache: Whether to use cached results (default: True)
+
         Returns:
             List of hybrid search results
         """
-        # Get semantic search results
+        # Generate cache key for hybrid search
+        if use_cache:
+            cache_key = f"{user_id}:{query}:{n_results}:{semantic_weight}:{keyword_weight}"
+            if cache_key in self._hybrid_cache:
+                logger.debug(f"Cache hit for hybrid search: {cache_key}")
+                return self._hybrid_cache[cache_key]
+        
+        # Get semantic search results (with caching)
         semantic_results = await self.semantic_search(
             user_id=user_id,
             query=query,
-            n_results=n_results * 2
+            n_results=n_results * 2,
+            use_cache=use_cache
         )
         
         # Simple keyword matching (in production, use proper keyword search)
@@ -110,7 +178,22 @@ class SimilaritySearchService:
             semantic_weight, keyword_weight
         )
         
-        return combined_results[:n_results]
+        final_results = combined_results[:n_results]
+        
+        # Cache the results
+        if use_cache:
+            # Simple LRU cache implementation (max 64 entries)
+            if len(self._hybrid_cache) >= 64:
+                # Remove oldest key
+                if self._hybrid_cache_keys:
+                    oldest_key = self._hybrid_cache_keys.pop(0)
+                    del self._hybrid_cache[oldest_key]
+            
+            self._hybrid_cache[cache_key] = final_results
+            self._hybrid_cache_keys.append(cache_key)
+            logger.debug(f"Cached hybrid search results for key: {cache_key}")
+        
+        return final_results
     
     async def _keyword_search(
         self,

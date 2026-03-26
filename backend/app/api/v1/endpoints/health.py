@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 from loguru import logger
 
 from app.core.database import db
+from app.core.middleware import performance_metrics
 
 router = APIRouter()
 
@@ -63,4 +64,40 @@ async def detailed_health_check() -> dict:
         "components": components,
         "uptime": "0d 0h 0m 0s",  # TODO: Implement actual uptime tracking
         "environment": "development"  # TODO: Get from settings
+    }
+
+
+@router.get("/performance")
+async def performance_metrics_endpoint() -> dict:
+    """
+    Performance metrics endpoint.
+    
+    Returns:
+        dict: Performance metrics including response times, request counts, and error rates
+    """
+    logger.debug("Performance metrics requested")
+    
+    metrics = performance_metrics.get_metrics()
+    
+    return {
+        "status": "ok",
+        "metrics": metrics,
+        "timestamp": "2026-03-25T02:08:00Z"  # TODO: Use actual timestamp
+    }
+
+
+@router.post("/performance/reset")
+async def reset_performance_metrics() -> dict:
+    """
+    Reset performance metrics.
+    
+    Returns:
+        dict: Confirmation message
+    """
+    logger.info("Performance metrics reset requested")
+    performance_metrics.reset()
+    
+    return {
+        "status": "ok",
+        "message": "Performance metrics reset successfully"
     }

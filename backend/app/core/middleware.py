@@ -2,7 +2,9 @@
 Custom middleware for request logging and error handling.
 """
 import time
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict, List
+from collections import defaultdict
+from datetime import datetime, timedelta
 
 from fastapi import Request, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -12,6 +14,73 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from app.core.config import settings
+
+
+class PerformanceMetrics:
+    """Performance metrics collector for response time monitoring."""
+    
+    def __init__(self):
+        self.metrics = {
+            'endpoint_times': defaultdict(list),
+            'total_requests': 0,
+            'error_count': 0,
+            'start_time': datetime.now()
+        }
+        self.slow_threshold = 1.0  # 1 second
+    
+    def record_request(self, endpoint: str, duration: float, status_code: int):
+        """Record a request's performance metrics."""
+        self.metrics['total_requests'] += 1
+        self.metrics['endpoint_times'][endpoint].append(duration)
+        
+        # Keep only last 1000 measurements per endpoint
+        if len(self.metrics['endpoint_times'][endpoint]) > 1000:
+            self.metrics['endpoint_times'][endpoint] = self.metrics['endpoint_times'][endpoint][-1000:]
+        
+        if status_code >= 400:
+            self.metrics['error_count'] += 1
+        
+        # Log slow requests
+        if duration > self.slow_threshold:
+            logger.warning(f"Slow request detected: {endpoint} took {duration:.3f}s")
+    
+    def get_metrics(self) -> Dict:
+        """Get current performance metrics."""
+        endpoint_stats = {}
+        for endpoint, times in self.metrics['endpoint_times'].items():
+            if times:
+                endpoint_stats[endpoint] = {
+                    'count': len(times),
+                    'avg': sum(times) / len(times),
+                    'min': min(times),
+                    'max': max(times),
+                    'p95': sorted(times)[int(len(times) * 0.95)] if len(times) > 1 else times[0],
+                    'slow_count': sum(1 for t in times if t > self.slow_threshold)
+                }
+        
+        uptime = (datetime.now() - self.metrics['start_time']).total_seconds()
+        
+        return {
+            'uptime_seconds': uptime,
+            'total_requests': self.metrics['total_requests'],
+            'error_count': self.metrics['error_count'],
+            'error_rate': self.metrics['error_count'] / max(self.metrics['total_requests'], 1),
+            'endpoint_stats': endpoint_stats,
+            'slow_threshold': self.slow_threshold
+        }
+    
+    def reset(self):
+        """Reset all metrics."""
+        self.metrics = {
+            'endpoint_times': defaultdict(list),
+            'total_requests': 0,
+            'error_count': 0,
+            'start_time': datetime.now()
+        }
+
+
+# Global performance metrics instance
+performance_metrics = PerformanceMetrics()
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -53,8 +122,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             f"duration={process_time:.3f}s"
         )
 
-        # Add X-Process-Time header
+        # Record performance metrics
+        endpoint = f"{request.method} {request.url.path}"
+        performance_metrics.record_request(endpoint, process_time, response.status_code)
+
+        # Add performance headers
         response.headers["X-Process-Time"] = str(process_time)
+        response.headers["X-Performance-Metrics"] = "enabled"
 
         return response
 
