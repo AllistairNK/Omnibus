@@ -1,0 +1,58 @@
+<div class="settings-container">
+  <mat-card class="settings-card">
+    <mat-card-header>
+      <mat-card-title>Settings</mat-card-title>
+      <mat-card-subtitle>Configure your AI Chatbot preferences</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-tab-group [(selectedIndex)]="selectedTab">
+        <mat-tab label="General">
+          <form [formGroup]="settingsForm" class="tab-content">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Theme</mat-label>
+              <mat-select formControlName="theme">
+                <mat-option value="terminal">Terminal (Green)</mat-option>
+                <mat-option value="dark">Dark</mat-option>
+                <mat-option value="light">Light</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Font Size</mat-label>
+              <input matInput type="number" formControlName="fontSize">
+            </mat-form-field>
+            <mat-slide-toggle formControlName="enableNotifications">
+              Enable Notifications
+            </mat-slide-toggle>
+          </form>
+        </mat-tab>
+        <mat-tab label="AI Model">
+          <form [formGroup]="settingsForm" class="tab-content">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Default Model</mat-label>
+              <mat-select formControlName="defaultModel">
+                <mat-option value="gpt-5-nano">GPT-5-Nano</mat-option>
+                <mat-option value="claude-3">Claude 3</mat-option>
+                <mat-option value="gemini-pro">Gemini Pro</mat-option>
+                <mat-option value="local">Local Model</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>API Endpoint</mat-label>
+              <input matInput formControlName="apiEndpoint">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Max Tokens</mat-label>
+              <input matInput type="number" formControlName="maxTokens">
+            </mat-form-field>
+          </form>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button (click)="selectedTab = 0">Previous</button>
+      <button mat-button (click)="selectedTab = 1">Next</button>
+      <span style="flex: 1"></span>
+      <button mat-raised-button color="primary" (click)="saveSettings()">Save Settings</button>
+    </mat-card-actions>
+  </mat-card>
+</div>

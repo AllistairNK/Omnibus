@@ -111,7 +111,7 @@ class LLMProvider(ABC):
 class OpenAIProvider(LLMProvider):
     """OpenAI GPT provider implementation."""
     
-    def __init__(self, api_key: str, default_model: str = "gpt-3.5-turbo"):
+    def __init__(self, api_key: str, default_model: str = "gpt-5-nano"):
         """Initialize OpenAI provider."""
         self.api_key = api_key
         self.default_model = default_model

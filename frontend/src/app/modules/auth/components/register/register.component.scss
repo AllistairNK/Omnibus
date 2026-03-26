@@ -1,0 +1,33 @@
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
+
+.register-card {
+  width: 100%;
+  max-width: 500px;
+  padding: 2rem;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.half-width {
+  width: calc(50% - 0.5rem);
+}
+
+.row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+mat-card-actions {
+  padding: 0;
+  margin-top: 1rem;
+}

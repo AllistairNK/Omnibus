@@ -1,0 +1,146 @@
+.terminal-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #0a0a0a;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 2px solid #00ff00;
+  background-color: #111111;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.ascii-art {
+  color: #00ffcc;
+}
+
+.cursor-blink {
+  animation: blink 1s infinite;
+  color: #00ff00;
+}
+
+.system-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #00ff00;
+}
+
+.status-indicator.online {
+  background-color: #00ff00;
+}
+
+.status-text {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.terminal-nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.terminal-nav a {
+  color: #00ff00;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.terminal-nav a:hover {
+  border-color: #00ff00;
+  background-color: rgba(0, 255, 0, 0.1);
+}
+
+.terminal-nav a.active {
+  background-color: rgba(0, 255, 0, 0.2);
+  border-color: #00ff00;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.terminal-main {
+  flex: 1;
+  padding: 2rem;
+}
+
+.terminal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-top: 2px solid #00ff00;
+  background-color: #111111;
+  font-size: 0.9rem;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.command-prompt {
+  color: #00ffcc;
+  font-weight: bold;
+}
+
+.current-route {
+  color: #00ff00;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.timestamp {
+  opacity: 0.7;
+}
+
+.version {
+  color: #00ffcc;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}

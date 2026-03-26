@@ -117,7 +117,7 @@ def create_test_chat_session(
     session_id: Optional[str] = None,
     user_id: Optional[str] = None,
     title: Optional[str] = None,
-    model: str = "gpt-4",
+    model: str = "gpt-5-nano",
     created_at: Optional[datetime] = None,
 ) -> Dict[str, Any]:
     """Create a test chat session dictionary."""
@@ -160,7 +160,7 @@ def create_test_chat_message(
     if metadata is None:
         metadata = {
             "tokens": 50,
-            "model": "gpt-4",
+            "model": "gpt-5-nano",
         }
 
     return {

@@ -3,8 +3,8 @@
 ## Overview
 This document tracks the implementation progress of the AI Chatbot with RAG project. Use this to mark completed tasks, track blockers, and monitor overall progress against the implementation plan.
 
-**Last Updated**: 2026-03-25
-**Overall Progress**: 83% (Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 4.1, 4.2 & 4.3 Completed)
+**Last Updated**: 2026-03-26
+**Overall Progress**: 89% (Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 4.1, 4.2, 4.3 & 5.1 Completed)
 
 ## Progress Summary
 
@@ -107,17 +107,17 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
   - [x] Create model switching logic with fallbacks
 
 ### Phase 3: Frontend Core (Week 5-6) - UI Foundation
-**Status**: Not Started (0/18 tasks)
+**Status**: In Progress (1/18 tasks)
 **Target Completion**: Week 6
 **Blockers**: Backend API completion required
 
 #### Week 5: Angular Project Setup & Core Components
-- [ ] **Task 5.1**: Angular Project Structure (0/5 subtasks)
-  - [ ] Set up Angular 18 with required dependencies
-  - [ ] Configure routing with lazy loading
-  - [ ] Implement Angular Material theming (terminal theme)
-  - [ ] Set up state management (NgRx or Services)
-  - [ ] Create HTTP interceptors for auth and error handling
+- [x] **Task 5.1**: Angular Project Structure (5/5 subtasks)
+  - [x] Set up Angular 18 with required dependencies
+  - [x] Configure routing with lazy loading
+  - [x] Implement Angular Material theming (terminal theme)
+  - [x] Set up state management (NgRx or Services)
+  - [x] Create HTTP interceptors for auth and error handling
 
 - [ ] **Task 5.2**: Authentication UI (0/5 subtasks)
   - [ ] Build login/signup components
@@ -310,9 +310,9 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
 
 ### Week 5 Report (Target: 2026-04-29)
 **Planned**: Angular setup, auth UI, terminal foundation
-**Actual**: Not started
+**Actual**: Task 5.1 (Angular Project Structure) completed. Auth UI and terminal foundation pending.
 **Blockers**: None
-**Notes**: 
+**Notes**: Angular 18 project already set up with required dependencies (Angular Material, NgRx). Routing configured with lazy loading for auth, chat, documents, and settings modules. Implemented terminal theme with green-on-black styling using Angular Material theming. Set up NgRx store for auth state management with actions, reducers, effects, and selectors. Created HTTP interceptors for authentication token injection and error handling. Frontend foundation ready for further UI development. 
 
 ### Week 6 Report (Target: 2026-05-06)
 **Planned**: Chat interface, document management UI, API key UI

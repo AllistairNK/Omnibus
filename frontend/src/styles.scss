@@ -1,1 +1,92 @@
 /* You can add global styles to this file, and also import other style files */
+
+// Terminal Theme for AI Chatbot with RAG
+@use '@angular/material' as mat;
+
+// Include the common styles for Angular Material
+@include mat.core();
+
+// Define the terminal theme palette
+$terminal-primary: mat.define-palette(mat.$green-palette, 700, 500, 900);
+$terminal-accent: mat.define-palette(mat.$cyan-palette, A200, A100, A400);
+$terminal-warn: mat.define-palette(mat.$red-palette);
+
+$terminal-theme: mat.define-dark-theme((
+  color: (
+    primary: $terminal-primary,
+    accent: $terminal-accent,
+    warn: $terminal-warn,
+  ),
+  typography: mat.define-typography-config(
+    $font-family: 'Courier New, monospace',
+    $headline: mat.define-typography-level(2rem, 1.2, 700),
+    $body-1: mat.define-typography-level(1rem, 1.5, 400)
+  ),
+  density: 0
+));
+
+// Apply the terminal theme
+@include mat.all-component-themes($terminal-theme);
+
+// Global styles
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Courier New', monospace;
+  background-color: #0a0a0a;
+  color: #00ff00;
+}
+
+a {
+  color: #00ffcc;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+// Custom scrollbar for terminal feel
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00ff00;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00cc00;
+}
+
+// Terminal blinking cursor effect
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s infinite;
+}
+
+// Utility classes
+.full-width {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-2 {
+  margin-top: 2rem;
+}
+
+.mb-2 {
+  margin-bottom: 2rem;
+}
