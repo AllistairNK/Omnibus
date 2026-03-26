@@ -1043,7 +1043,10 @@ async def create_chat_completion_stream(
         
         async def event_generator():
             """Generate Server-Sent Events for streaming response."""
+            import asyncio
             full_response = ""
+            last_ping_time = asyncio.get_event_loop().time()
+            token_buffer = []
             
             try:
                 # Stream tokens from LLM
@@ -1054,14 +1057,39 @@ async def create_chat_completion_stream(
                     max_tokens=completion_request.max_tokens,
                 ):
                     full_response += token
+                    token_buffer.append(token)
                     
-                    # Send token as SSE event
+                    # Send ping every 15 seconds to keep connection alive
+                    current_time = asyncio.get_event_loop().time()
+                    if current_time - last_ping_time > 15:
+                        yield ": ping\n\n"
+                        last_ping_time = current_time
+                    
+                    # Batch tokens to reduce network overhead (max 3 tokens per event)
+                    if len(token_buffer) >= 3:
+                        batched_token = "".join(token_buffer)
+                        event_data = {
+                            "type": "token",
+                            "data": {
+                                "token": batched_token,
+                                "message_id": assistant_message_id,
+                                "chat_id": chat_id,
+                                "batch_size": len(token_buffer)
+                            }
+                        }
+                        yield f"data: {json.dumps(event_data)}\n\n"
+                        token_buffer = []
+                
+                # Send any remaining tokens
+                if token_buffer:
+                    batched_token = "".join(token_buffer)
                     event_data = {
                         "type": "token",
                         "data": {
-                            "token": token,
+                            "token": batched_token,
                             "message_id": assistant_message_id,
                             "chat_id": chat_id,
+                            "batch_size": len(token_buffer)
                         }
                     }
                     yield f"data: {json.dumps(event_data)}\n\n"

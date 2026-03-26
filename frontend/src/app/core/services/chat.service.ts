@@ -193,56 +193,110 @@ export class ChatService {
   /**
    * Alternative SSE implementation using fetch API for more control
    */
-  async *streamMessage(request: ChatCompletionRequest): AsyncGenerator<string, void, unknown> {
-    const response = await fetch(`${this.API_BASE}/chats/completions/stream`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-      },
-      body: JSON.stringify({ ...request, stream: true })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  async *streamMessage(request: ChatCompletionRequest, abortSignal?: AbortSignal): AsyncGenerator<string, void, unknown> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    // Combine with external abort signal if provided
+    if (abortSignal) {
+      abortSignal.addEventListener('abort', () => {
+        controller.abort();
+      });
     }
-
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error('Response body is not readable');
-    }
-
-    const decoder = new TextDecoder();
-    let buffer = '';
-
+    
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      const response = await fetch(`${this.API_BASE}/chats/completions/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+        body: JSON.stringify({ ...request, stream: true }),
+        signal: controller.signal
+      });
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              return;
-            }
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.token) {
-                yield parsed.token;
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Response body is not readable');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let lastYieldTime = Date.now();
+      let tokenBuffer: string[] = [];
+      
+      // Buffer tokens to reduce UI updates (max 50ms between yields)
+      const flushBuffer = () => {
+        if (tokenBuffer.length > 0) {
+          const combined = tokenBuffer.join('');
+          tokenBuffer = [];
+          lastYieldTime = Date.now();
+          return combined;
+        }
+        return null;
+      };
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                // Flush any remaining tokens
+                const remaining = flushBuffer();
+                if (remaining) yield remaining;
+                return;
               }
-            } catch (e) {
-              console.error('Error parsing SSE data:', e);
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.token) {
+                    // Handle batched tokens (backend may send multiple tokens as one string)
+                    const tokens = parsed.token;
+                    tokenBuffer.push(tokens);
+                    
+                    // Yield if buffer is large enough or enough time has passed
+                    const now = Date.now();
+                    if (tokenBuffer.length >= 3 || now - lastYieldTime >= 50) {
+                      const combined = flushBuffer();
+                      if (combined) yield combined;
+                    }
+                  }
+                } catch (e) {
+                  console.error('Error parsing SSE data:', e);
+                }
+            } else if (line.startsWith('ping:')) {
+              // Keep-alive ping, ignore
+              continue;
             }
           }
         }
+        
+        // Flush any remaining tokens
+        const remaining = flushBuffer();
+        if (remaining) yield remaining;
+      } finally {
+        reader.releaseLock();
+        clearTimeout(timeoutId);
       }
-    } finally {
-      reader.releaseLock();
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw new Error('Stream request timed out after 30 seconds');
+      }
+      throw error;
     }
   }
 

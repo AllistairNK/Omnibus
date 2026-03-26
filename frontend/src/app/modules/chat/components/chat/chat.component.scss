@@ -237,6 +237,28 @@
   font-weight: bold;
 }
 
+.stop-button {
+  background: #330000;
+  color: #ff0000;
+  border: 1px solid #cc0000;
+  border-radius: 4px;
+  padding: 8px 15px;
+  margin-left: 10px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.stop-button:hover {
+  background: #550000;
+  border-color: #ff0000;
+}
+
+.stop-icon {
+  font-weight: bold;
+}
+
 .input-hint {
   font-size: 12px;
   color: #666666;

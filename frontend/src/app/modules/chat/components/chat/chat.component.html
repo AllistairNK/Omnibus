@@ -103,8 +103,11 @@
           placeholder="Type your message or command..."
           autofocus
         />
-        <button class="send-button" (click)="sendMessage()" title="Send (Enter)">
+        <button class="send-button" (click)="sendMessage()" title="Send (Enter)" [disabled]="isStreaming">
           <span class="send-icon">⏎</span>
+        </button>
+        <button *ngIf="isStreaming" class="stop-button" (click)="stopStreaming()" title="Stop streaming (Ctrl+C)">
+          <span class="stop-icon">⏹</span>
         </button>
       </div>
       <div class="input-hint">

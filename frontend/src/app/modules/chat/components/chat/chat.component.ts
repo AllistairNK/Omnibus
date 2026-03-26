@@ -26,6 +26,62 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   currentChatId: string | null = null;
   streamingResponse = '';
   private streamSubscription?: Subscription;
+  private currentStreamAbortController?: AbortController;
+  protected isStreaming = false;
+  
+  // ASCII loading animations
+  private asciiLoadingFrames = [
+    `
+    ⠋ Loading
+    `,
+    `
+    ⠙ Loading
+    `,
+    `
+    ⠹ Loading
+    `,
+    `
+    ⠸ Loading
+    `,
+    `
+    ⠼ Loading
+    `,
+    `
+    ⠴ Loading
+    `,
+    `
+    ⠦ Loading
+    `,
+    `
+    ⠧ Loading
+    `,
+    `
+    ⠇ Loading
+    `,
+    `
+    ⠏ Loading
+    `
+  ];
+  
+  private asciiThinkingFrames = [
+    `
+    ( •_•)
+    ( •_•)>⌐■-■
+    (⌐■_■)
+    `,
+    `
+    ( •_•)
+    ( •_•)>⌐■-■
+    (⌐■_■) 
+    `,
+    `
+    ( •_•)
+    ( •_•)>⌐■-■
+    (⌐■_■)  
+    `
+  ];
+  
+  private currentLoadingInterval: any = null;
   
   // Command suggestions
   commandSuggestions: string[] = [];
@@ -41,6 +97,14 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     similarityThreshold: 70,
     includeSources: true,
     highlightMatches: true
+  };
+
+  // Streaming Configuration
+  streamingConfig = {
+    bufferSize: 3, // Number of tokens to buffer before display
+    minDisplayTime: 10, // Minimum ms per token
+    maxDisplayTime: 50, // Maximum ms per token
+    smoothScrolling: true
   };
 
   constructor(
@@ -69,6 +133,55 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.streamSubscription.unsubscribe();
     }
     this.chatService.closeStream();
+    // Abort any ongoing stream
+    if (this.currentStreamAbortController) {
+      this.currentStreamAbortController.abort();
+    }
+  }
+
+  /**
+   * Stop the current streaming response
+   */
+  stopStreaming() {
+    if (this.currentStreamAbortController && this.isStreaming) {
+      this.currentStreamAbortController.abort();
+      this.isStreaming = false;
+      this.isTyping = false;
+      this.stopLoadingAnimation();
+    }
+  }
+
+  /**
+   * Start ASCII loading animation
+   */
+  private startLoadingAnimation() {
+    let frameIndex = 0;
+    this.stopLoadingAnimation();
+    
+    this.currentLoadingInterval = setInterval(() => {
+      // Update the last message with loading animation
+      if (this.messages.length > 0) {
+        const lastMessage = this.messages[this.messages.length - 1];
+        if (lastMessage.role === 'assistant' && lastMessage.metadata?.streaming) {
+          const loadingFrame = this.asciiLoadingFrames[frameIndex % this.asciiLoadingFrames.length];
+          this.messages[this.messages.length - 1] = {
+            ...lastMessage,
+            content: lastMessage.content + '\n' + loadingFrame
+          };
+          frameIndex++;
+        }
+      }
+    }, 150);
+  }
+
+  /**
+   * Stop ASCII loading animation
+   */
+  private stopLoadingAnimation() {
+    if (this.currentLoadingInterval) {
+      clearInterval(this.currentLoadingInterval);
+      this.currentLoadingInterval = null;
+    }
   }
 
   scrollToBottom(): void {
@@ -147,31 +260,87 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       };
       
       try {
-        // Use the async generator for streaming
-        const stream = this.chatService.streamMessage(request);
-        let fullResponse = '';
+        // Create abort controller for this stream
+        this.currentStreamAbortController = new AbortController();
+        this.isStreaming = true;
         
-        for await (const token of stream) {
-          this.streamingResponse += token;
-          fullResponse += token;
-          
-          // Update the UI with the streaming response
-          this.updateStreamingResponse(fullResponse);
+        // Use the async generator for streaming with abort signal
+        const stream = this.chatService.streamMessage(request, this.currentStreamAbortController.signal);
+        let fullResponse = '';
+        let displayedResponse = '';
+        
+        // Create initial streaming message
+        this.messages.push({
+          role: 'assistant',
+          content: '',
+          timestamp: new Date().toISOString(),
+          metadata: { streaming: true, interruptible: true }
+        });
+        const streamingMessageIndex = this.messages.length - 1;
+        
+        // Start loading animation
+        this.startLoadingAnimation();
+        
+        try {
+          for await (const token of stream) {
+            fullResponse += token;
+            
+            // Add token to display buffer
+            displayedResponse += token;
+            
+            // Update the UI with typing simulation
+            // Instead of simulating character by character (which could be slow for long responses),
+            // we'll update in chunks but with a slight delay to simulate thinking
+            this.messages[streamingMessageIndex] = {
+              ...this.messages[streamingMessageIndex],
+              content: displayedResponse
+            };
+            
+            // Add a small delay for typing effect (faster for short tokens, slower for longer ones)
+            const delay = Math.min(
+              this.streamingConfig.maxDisplayTime, 
+              Math.max(this.streamingConfig.minDisplayTime, token.length * 5)
+            );
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            // Stream was interrupted by user
+            this.messages[streamingMessageIndex] = {
+              ...this.messages[streamingMessageIndex],
+              content: displayedResponse + ' [Interrupted]',
+              metadata: { streaming: false, interrupted: true }
+            };
+            this.isTyping = false;
+            this.isStreaming = false;
+            this.currentStreamAbortController = undefined;
+            return;
+          }
+          throw error;
         }
         
         // Streaming complete
         this.isTyping = false;
+        this.isStreaming = false;
         this.streamingResponse = '';
-        this.messages.push({
+        this.currentStreamAbortController = undefined;
+        this.stopLoadingAnimation();
+        
+        // Update final message (remove streaming metadata)
+        this.messages[streamingMessageIndex] = {
           role: 'assistant',
           content: fullResponse,
-          timestamp: new Date().toISOString()
-        });
+          timestamp: new Date().toISOString(),
+          metadata: { streaming: false }
+        };
         
       } catch (error) {
         console.error('Error in chat completion:', error);
         this.isTyping = false;
+        this.isStreaming = false;
         this.streamingResponse = '';
+        this.stopLoadingAnimation();
+        this.currentStreamAbortController = undefined;
         
         // Fallback to simulated response
         setTimeout(() => {
@@ -202,6 +371,40 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         timestamp: new Date().toISOString(),
         metadata: { streaming: true }
       });
+    }
+  }
+
+  /**
+   * Simulate typing with variable speed based on character type
+   * Faster for common characters (letters, spaces), slower for punctuation and complex characters
+   */
+  private async simulateTyping(text: string, onProgress: (displayText: string) => void): Promise<void> {
+    let displayText = '';
+    const baseDelay = 20; // Base delay in ms per character
+    const fastDelay = 10; // Faster for common characters
+    const slowDelay = 50; // Slower for punctuation/complex
+    
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      
+      // Determine delay based on character type
+      let delay = baseDelay;
+      if (/[a-zA-Z0-9\s]/.test(char)) {
+        delay = fastDelay;
+      } else if (/[.,;:!?]/.test(char)) {
+        delay = slowDelay;
+      } else if (/[{}[\]()<>]/.test(char)) {
+        delay = slowDelay * 1.5;
+      }
+      
+      // Add some randomness (±30%)
+      delay = delay * (0.7 + Math.random() * 0.6);
+      
+      // Wait before adding character
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      displayText += char;
+      onProgress(displayText);
     }
   }
 
