@@ -39,7 +39,12 @@
         
       </form>
     </mat-card-content>
-    <button mat-raised-button color="primary" routerLink="/chat">Go to Chat</button>
+    <div class="bypass-section">
+      <button mat-raised-button color="accent" (click)="onBypassLogin()" [disabled]="isLoading">
+        Bypass Login (Demo)
+      </button>
+      <button mat-raised-button color="primary" routerLink="/chat">Go to Chat</button>
+    </div>
 
     <mat-card-actions>
       <a routerLink="/auth/register" mat-button>Create an account</a>

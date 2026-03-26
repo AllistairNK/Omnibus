@@ -24,6 +24,13 @@ export class AuthService {
     );
   }
 
+  bypassLogin(): void {
+    // Set a dummy token to bypass authentication
+    const dummyToken = 'dummy_token_bypass_' + Date.now();
+    this.setToken(dummyToken);
+    this.isAuthenticatedSubject.next(true);
+  }
+
   register(userData: any): Observable<any> {
     return this.http.post('/api/v1/auth/register', userData);
   }

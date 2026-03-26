@@ -49,4 +49,15 @@ export class LoginComponent {
       });
     }
   }
+
+  onBypassLogin() {
+    this.isLoading = true;
+    // Simulate a short delay for UX
+    setTimeout(() => {
+      this.authService.bypassLogin();
+      this.isLoading = false;
+      this.snackBar.open('Bypass login successful! Using demo account.', 'Close', { duration: 3000 });
+      this.router.navigate(['/chat']);
+    }, 500);
+  }
 }
