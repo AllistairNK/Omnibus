@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
+import * as AuthActions from '../state/auth/auth.actions';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +12,10 @@ export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private store: Store
+  ) {}
 
   login(email: string, password: string): Observable<any> {
     // TODO: Replace with actual backend endpoint
@@ -29,6 +34,11 @@ export class AuthService {
     const dummyToken = 'dummy_token_bypass_' + Date.now();
     this.setToken(dummyToken);
     this.isAuthenticatedSubject.next(true);
+    // Update NgRx store state
+    this.store.dispatch(AuthActions.loginSuccess({ 
+      token: dummyToken, 
+      user: { email: 'demo@example.com', name: 'Demo User' } 
+    }));
   }
 
   register(userData: any): Observable<any> {
@@ -38,6 +48,8 @@ export class AuthService {
   logout(): void {
     this.removeToken();
     this.isAuthenticatedSubject.next(false);
+    // Update NgRx store state
+    this.store.dispatch(AuthActions.logout());
   }
 
   isAuthenticated(): boolean {

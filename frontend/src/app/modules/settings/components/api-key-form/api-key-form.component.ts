@@ -6,7 +6,7 @@ import { ApiKeysService, APIKey, APIKeyCreate, APIKeyUpdate } from '../../../../
 @Component({
   selector: 'app-api-key-form',
   templateUrl: './api-key-form.component.html',
-  styleUrls: ['./api-key-form.component.scss']
+  styleUrls: ['./api-key-form.component.scss'],
 })
 export class ApiKeyFormComponent implements OnInit {
   @Input() apiKey?: APIKey;

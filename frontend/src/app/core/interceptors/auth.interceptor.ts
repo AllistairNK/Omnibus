@@ -9,10 +9,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return store.select(selectToken).pipe(
     first(),
     mergeMap(token => {
-      if (token) {
+      // Check both NgRx store and localStorage as fallback
+      const authToken = token || localStorage.getItem('auth_token');
+      if (authToken) {
         const cloned = req.clone({
           setHeaders: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${authToken}`
           }
         });
         return next(cloned);
