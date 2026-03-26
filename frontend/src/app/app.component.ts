@@ -5,11 +5,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { RouterModule } from '@angular/router';
+import { NetworkStatusIndicatorComponent } from './core/components/network-status-indicator/network-status-indicator.component';
+import { FeatureDegradationWarningComponent } from './core/components/feature-degradation-warning/feature-degradation-warning.component';
+import { SyncStatusIndicatorComponent } from './core/components/sync-status-indicator/sync-status-indicator.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, MatButtonModule, MatIconModule, CommonModule, RouterModule],
+  imports: [RouterOutlet, MatButtonModule, MatIconModule, CommonModule, RouterModule, NetworkStatusIndicatorComponent, FeatureDegradationWarningComponent, SyncStatusIndicatorComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

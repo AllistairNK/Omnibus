@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection, isDevMode } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, isDevMode, ErrorHandler } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideStore } from '@ngrx/store';
@@ -11,19 +11,22 @@ import { authReducer } from './core/state/auth/auth.reducer';
 import { AuthEffects } from './core/state/auth/auth.effects';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { retryInterceptor } from './core/interceptors/retry.interceptor';
+import { GlobalErrorHandlerService } from './core/error-handling/global-error-handler.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(
-      withInterceptors([authInterceptor, errorInterceptor])
+      withInterceptors([authInterceptor, retryInterceptor, errorInterceptor])
     ),
     provideStore({
       auth: authReducer
     }),
     provideEffects([AuthEffects]),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
-    provideAnimations()
+    provideAnimations(),
+    { provide: ErrorHandler, useClass: GlobalErrorHandlerService }
   ]
 };
