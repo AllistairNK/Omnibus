@@ -12,6 +12,13 @@ export interface ChatMessage {
   metadata?: any;
   tokens_used?: number;
   model?: string;
+  sources?: Array<{
+    document_id: string;
+    document_title: string;
+    chunk_text: string;
+    similarity_score: number;
+  }>;
+  showSources?: boolean; // UI property for toggling source display
 }
 
 export interface ChatSession {

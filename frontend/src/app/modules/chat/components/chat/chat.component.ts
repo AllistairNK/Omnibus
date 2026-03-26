@@ -13,7 +13,10 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   messages: ChatMessage[] = [
     { role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you today?', timestamp: new Date().toISOString() },
     { role: 'user', content: 'Tell me about RAG.', timestamp: new Date().toISOString() },
-    { role: 'assistant', content: 'RAG stands for Retrieval-Augmented Generation. It combines retrieval of relevant documents with generative AI to produce accurate, context-aware responses.', timestamp: new Date().toISOString() }
+    { role: 'assistant', content: 'RAG stands for Retrieval-Augmented Generation. It combines retrieval of relevant documents with generative AI to produce accurate, context-aware responses.', timestamp: new Date().toISOString(), metadata: { sources: [
+      { document_id: 'doc1', document_title: 'RAG Overview.pdf', chunk_text: 'Retrieval-Augmented Generation (RAG) enhances large language models by retrieving relevant documents from a knowledge base.', similarity_score: 0.95 },
+      { document_id: 'doc2', document_title: 'AI Research Paper.docx', chunk_text: 'RAG models outperform standard LLMs on knowledge-intensive tasks by incorporating external knowledge.', similarity_score: 0.87 }
+    ]} }
   ];
   newMessage = '';
   isTyping = false;
@@ -22,6 +25,17 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   currentChatId: string | null = null;
   streamingResponse = '';
   private streamSubscription?: Subscription;
+  
+  // RAG Configuration
+  showRagSettings = false;
+  ragConfig = {
+    useRag: true,
+    ragMethod: 'auto',
+    sourceCount: 5,
+    similarityThreshold: 70,
+    includeSources: true,
+    highlightMatches: true
+  };
 
   constructor(private chatService: ChatService) {}
 
@@ -31,6 +45,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     
     // Create a new chat session or load existing one
     this.createOrLoadChat();
+    
+    // Load saved RAG settings
+    this.loadRagSettings();
   }
 
   ngAfterViewChecked() {
@@ -223,6 +240,95 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         if (matching) {
           this.newMessage = matching;
         }
+      }
+    }
+  }
+
+  // Source citation helper methods
+  getSourceCount(msg: ChatMessage): number {
+    if (msg.sources && msg.sources.length > 0) {
+      return msg.sources.length;
+    }
+    if (msg.metadata?.sources && Array.isArray(msg.metadata.sources)) {
+      return msg.metadata.sources.length;
+    }
+    return 0;
+  }
+
+  getSources(msg: ChatMessage): any[] {
+    if (msg.sources && msg.sources.length > 0) {
+      return msg.sources;
+    }
+    if (msg.metadata?.sources && Array.isArray(msg.metadata.sources)) {
+      return msg.metadata.sources;
+    }
+    return [];
+  }
+
+  toggleSources(msg: ChatMessage): void {
+    if (!msg.hasOwnProperty('showSources')) {
+      msg.showSources = false;
+    }
+    msg.showSources = !msg.showSources;
+  }
+
+  getConfidenceClass(score: number): string {
+    if (score >= 0.9) return 'confidence-high';
+    if (score >= 0.7) return 'confidence-medium';
+    return 'confidence-low';
+  }
+
+  viewDocument(documentId: string): void {
+    console.log('View document:', documentId);
+    // TODO: Implement document viewing
+    alert(`View document ${documentId} - Feature coming soon!`);
+  }
+
+  highlightInDocument(source: any): void {
+    console.log('Highlight in document:', source);
+    // TODO: Implement document highlighting
+    alert(`Highlighting text in ${source.document_title} - Feature coming soon!`);
+  }
+
+  truncateText(text: string, maxLength: number): string {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  }
+
+  // RAG Configuration methods
+  toggleRagSettings(): void {
+    this.showRagSettings = !this.showRagSettings;
+  }
+
+  saveRagSettings(): void {
+    console.log('Saving RAG settings:', this.ragConfig);
+    // TODO: Save to backend or local storage
+    localStorage.setItem('ragConfig', JSON.stringify(this.ragConfig));
+    alert('RAG settings saved!');
+    this.showRagSettings = false;
+  }
+
+  resetRagSettings(): void {
+    this.ragConfig = {
+      useRag: true,
+      ragMethod: 'auto',
+      sourceCount: 5,
+      similarityThreshold: 70,
+      includeSources: true,
+      highlightMatches: true
+    };
+    console.log('RAG settings reset to defaults');
+  }
+
+  loadRagSettings(): void {
+    const saved = localStorage.getItem('ragConfig');
+    if (saved) {
+      try {
+        this.ragConfig = { ...this.ragConfig, ...JSON.parse(saved) };
+        console.log('Loaded RAG settings:', this.ragConfig);
+      } catch (e) {
+        console.error('Failed to parse saved RAG settings:', e);
       }
     }
   }
