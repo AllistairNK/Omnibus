@@ -1,0 +1,142 @@
+.api-key-form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--mat-app-background-color, #1a1a1a);
+  border-radius: 8px;
+  border: 1px solid var(--mat-divider-color, #333);
+
+  .form-header {
+    margin-bottom: 24px;
+
+    h3 {
+      margin: 0 0 8px 0;
+      color: var(--mat-primary-color, #00ff00);
+      font-family: 'Courier New', monospace;
+      font-size: 1.5rem;
+    }
+
+    .form-description {
+      margin: 0;
+      color: var(--mat-secondary-text-color, #aaa);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+  }
+
+  .form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    .full-width {
+      width: 100%;
+    }
+
+    .provider-option {
+      display: flex;
+      flex-direction: column;
+      padding: 8px 0;
+
+      .provider-label {
+        font-weight: 500;
+        color: var(--mat-primary-text-color, #fff);
+      }
+
+      .provider-description {
+        font-size: 0.8rem;
+        color: var(--mat-secondary-text-color, #aaa);
+        margin-top: 2px;
+      }
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+
+      .toggle-description {
+        font-size: 0.85rem;
+        color: var(--mat-secondary-text-color, #aaa);
+        flex: 1;
+      }
+    }
+
+    .validation-error {
+      font-size: 0.8rem;
+      color: var(--mat-warn-color, #f44336);
+    }
+
+    .security-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(255, 193, 7, 0.1);
+      border-radius: 4px;
+      border-left: 4px solid var(--mat-warn-color, #ffc107);
+
+      mat-icon {
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .security-text {
+        font-size: 0.85rem;
+        color: var(--mat-secondary-text-color, #aaa);
+        line-height: 1.4;
+
+        strong {
+          color: var(--mat-warn-color, #ffc107);
+        }
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--mat-divider-color, #333);
+
+      .inline-spinner {
+        display: inline-block;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+    }
+  }
+}
+
+// Dark theme adjustments
+:host-context(.dark-theme) .api-key-form {
+  background: #2d2d2d;
+  border-color: #444;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .api-key-form {
+    padding: 16px;
+    margin: 0 -16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+
+    .toggle-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .form-actions {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}

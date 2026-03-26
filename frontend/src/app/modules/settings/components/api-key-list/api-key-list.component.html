@@ -1,0 +1,165 @@
+<div class="api-key-list">
+  <div class="list-header">
+    <h3>API Keys</h3>
+    <p class="list-description">
+      Manage your API keys for different LLM providers. Keys are encrypted and only the last 4 characters are displayed.
+    </p>
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="startAddNew()"
+      [disabled]="isAddingNew || editingKey"
+    >
+      <mat-icon>add</mat-icon>
+      Add New API Key
+    </button>
+  </div>
+
+  <!-- Add/Edit Form -->
+  <div *ngIf="isAddingNew || editingKey" class="form-container">
+    <app-api-key-form
+      [apiKey]="editingKey || undefined"
+      [isEditing]="!!editingKey"
+      (saved)="onApiKeySaved($event)"
+      (cancelled)="cancelForm()"
+    ></app-api-key-form>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading && apiKeys.length === 0" class="loading-state">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading API keys...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && apiKeys.length === 0 && !isAddingNew" class="empty-state">
+    <mat-icon>key_off</mat-icon>
+    <h4>No API Keys Found</h4>
+    <p>You haven't added any API keys yet. Add your first API key to start using LLM providers.</p>
+    <button mat-raised-button color="primary" (click)="startAddNew()">
+      <mat-icon>add</mat-icon>
+      Add Your First API Key
+    </button>
+  </div>
+
+  <!-- API Keys Table -->
+  <div *ngIf="!isLoading && apiKeys.length > 0" class="table-container">
+    <div class="table-responsive">
+      <table mat-table [dataSource]="apiKeys" class="mat-elevation-z2">
+        
+        <!-- Provider Column -->
+        <ng-container matColumnDef="provider">
+          <th mat-header-cell *matHeaderCellDef>Provider</th>
+          <td mat-cell *matCellDef="let key">
+            <div class="provider-cell">
+              <mat-icon class="provider-icon">{{ getProviderIcon(key.provider) }}</mat-icon>
+              <div class="provider-info">
+                <span class="provider-name">{{ getProviderLabel(key.provider) }}</span>
+                <span class="provider-id">ID: {{ key.id.slice(0, 8) }}...</span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Masked Key Column -->
+        <ng-container matColumnDef="masked_key">
+          <th mat-header-cell *matHeaderCellDef>API Key</th>
+          <td mat-cell *matCellDef="let key">
+            <div class="key-cell">
+              <code class="masked-key">{{ key.masked_key }}</code>
+              <button 
+                mat-icon-button 
+                [matTooltip]="'Copy masked key'"
+                (click)="copyToClipboard(key.masked_key)"
+              >
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let key">
+            <div class="status-cell">
+              <mat-chip-option 
+                [color]="key.is_active ? 'primary' : 'warn'" 
+                [selected]="key.is_active"
+                (click)="toggleActive(key)"
+                [matTooltip]="key.is_active ? 'Click to deactivate' : 'Click to activate'"
+              >
+                {{ key.is_active ? 'Active' : 'Inactive' }}
+              </mat-chip-option>
+              <span class="status-hint">
+                {{ key.is_active ? 'Will be used for API calls' : 'Will not be used' }}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Created Column -->
+        <ng-container matColumnDef="created">
+          <th mat-header-cell *matHeaderCellDef>Created</th>
+          <td mat-cell *matCellDef="let key">
+            <div class="date-cell">
+              <span class="date">{{ formatDate(key.created_at) }}</span>
+              <span class="time-ago" *ngIf="key.updated_at !== key.created_at">
+                Updated {{ formatDate(key.updated_at) }}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let key">
+            <div class="actions-cell">
+              <button 
+                mat-icon-button 
+                color="primary"
+                [matTooltip]="'Edit API key'"
+                (click)="startEdit(key)"
+                [disabled]="isAddingNew || editingKey"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button 
+                mat-icon-button 
+                color="warn"
+                [matTooltip]="'Delete API key'"
+                (click)="confirmDelete(key)"
+                [disabled]="isAddingNew || editingKey"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+
+    <!-- Table Footer -->
+    <div class="table-footer">
+      <div class="footer-info">
+        <mat-icon>info</mat-icon>
+        <span>
+          {{ apiKeys.length }} API key{{ apiKeys.length !== 1 ? 's' : '' }} total • {{ activeKeyCount }} active
+        </span>
+      </div>
+      <button 
+        mat-button 
+        color="primary"
+        (click)="loadApiKeys()"
+        [disabled]="isLoading"
+      >
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+</div>

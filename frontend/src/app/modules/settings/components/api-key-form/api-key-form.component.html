@@ -1,0 +1,102 @@
+<form [formGroup]="apiKeyForm" (ngSubmit)="onSubmit()" class="api-key-form">
+  <div class="form-header">
+    <h3>{{ isEditing ? 'Edit API Key' : 'Add New API Key' }}</h3>
+    <p class="form-description">
+      {{ isEditing ? 'Update your API key details.' : 'Add a new API key for LLM provider integration.' }}
+    </p>
+  </div>
+
+  <div class="form-fields">
+    <!-- Provider Selection -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Provider</mat-label>
+      <mat-select formControlName="provider" required>
+        <mat-option *ngFor="let provider of providers" [value]="provider.value">
+          <div class="provider-option">
+            <span class="provider-label">{{ provider.label }}</span>
+            <span class="provider-description">{{ provider.description }}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="providerControl?.invalid && providerControl?.touched">
+        Provider is required
+      </mat-error>
+      <mat-hint>Select the LLM provider for this API key</mat-hint>
+    </mat-form-field>
+
+    <!-- API Key Input -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>API Key</mat-label>
+      <input 
+        matInput 
+        [type]="showApiKey ? 'text' : 'password'" 
+        formControlName="api_key" 
+        placeholder="Enter your API key"
+        required
+      />
+      <button 
+        mat-icon-button 
+        matSuffix 
+        type="button"
+        (click)="toggleShowApiKey()"
+        [attr.aria-label]="showApiKey ? 'Hide API key' : 'Show API key'"
+      >
+        <mat-icon>{{ showApiKey ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+      <mat-error *ngIf="apiKeyControl?.invalid && apiKeyControl?.touched">
+        API key is required
+      </mat-error>
+      <mat-error *ngIf="validationError" class="validation-error">
+        {{ validationError }}
+      </mat-error>
+      <mat-hint>
+        {{ isEditing ? 'Leave empty to keep existing key' : 'Enter your API key from the provider' }}
+      </mat-hint>
+    </mat-form-field>
+
+    <!-- Active Toggle -->
+    <div class="toggle-row">
+      <mat-slide-toggle formControlName="is_active" color="primary">
+        Active
+      </mat-slide-toggle>
+      <span class="toggle-description">
+        When active, this key will be used for API calls to the selected provider
+      </span>
+    </div>
+
+    <!-- Security Note -->
+    <div class="security-note" *ngIf="!isEditing">
+      <mat-icon color="warn">security</mat-icon>
+      <div class="security-text">
+        <strong>Security Note:</strong> Your API key is encrypted before storage and never displayed in full.
+        Only the last 4 characters are shown for identification purposes.
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button 
+        mat-button 
+        type="button" 
+        (click)="onCancel()"
+        [disabled]="isLoading"
+      >
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit"
+        [disabled]="apiKeyForm.invalid || isLoading || !!validationError"
+      >
+        <span *ngIf="!isLoading">
+          {{ isEditing ? 'Update Key' : 'Add Key' }}
+        </span>
+        <span *ngIf="isLoading">
+          <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
+          {{ isEditing ? 'Updating...' : 'Adding...' }}
+        </span>
+      </button>
+    </div>
+  </div>
+</form>
