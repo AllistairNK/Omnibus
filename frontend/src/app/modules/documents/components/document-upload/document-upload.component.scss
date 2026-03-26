@@ -1,0 +1,124 @@
+.upload-container {
+  margin-bottom: 2rem;
+}
+
+.upload-card {
+  &.dragging {
+    border: 2px dashed #3f51b5;
+    background-color: rgba(63, 81, 181, 0.05);
+  }
+}
+
+.drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    border-color: #3f51b5;
+    background-color: rgba(63, 81, 181, 0.05);
+  }
+
+  &.has-file {
+    border-style: solid;
+    border-color: #4caf50;
+    background-color: rgba(76, 175, 80, 0.05);
+  }
+}
+
+.drop-zone-content {
+  .upload-icon {
+    font-size: 64px;
+    height: 64px;
+    width: 64px;
+    color: #757575;
+    margin-bottom: 1rem;
+  }
+
+  .drop-text {
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+
+  .or-text {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0.5rem 0;
+  }
+
+  .file-info {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 1rem;
+    line-height: 1.4;
+  }
+}
+
+.file-selected {
+  width: 100%;
+}
+
+.file-info-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+
+  .file-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    color: #f44336;
+  }
+
+  .file-details {
+    flex: 1;
+
+    h4 {
+      margin: 0 0 0.25rem 0;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #333;
+      word-break: break-all;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #666;
+    }
+  }
+}
+
+.upload-progress {
+  margin-top: 1rem;
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #666;
+  }
+}
+
+mat-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem !important;
+}

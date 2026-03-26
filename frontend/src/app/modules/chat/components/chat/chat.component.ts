@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { ChatService, ChatMessage, ChatCompletionRequest } from '../../../../core/services/chat.service';
 import { Subscription } from 'rxjs';
-
+import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
@@ -158,9 +158,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   private async createOrLoadChat() {
     try {
-      // For now, create a new chat session
-      // In a real app, you might load the most recent chat
-      const response = await this.chatService.createChat('New Chat', 'gpt-4').toPromise();
+      const response = await firstValueFrom(this.chatService.createChat('New Chat', 'gpt-4'));
       this.currentChatId = response.id;
     } catch (error) {
       console.error('Error creating chat session:', error);

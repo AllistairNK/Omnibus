@@ -1,49 +1,113 @@
 <div class="documents-container">
+  <!-- Upload Component -->
+  <app-document-upload (uploadComplete)="onUploadComplete()"></app-document-upload>
+
+  <!-- Documents List -->
   <mat-card class="documents-card">
     <mat-card-header>
       <mat-card-title>Document Management</mat-card-title>
       <mat-card-subtitle>Uploaded documents for RAG processing</mat-card-subtitle>
     </mat-card-header>
+    
     <mat-card-content>
-      <table mat-table [dataSource]="documents" class="mat-elevation-z2">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef> Name </th>
-          <td mat-cell *matCellDef="let doc"> {{ doc.name }} </td>
-        </ng-container>
-        <ng-container matColumnDef="size">
-          <th mat-header-cell *matHeaderCellDef> Size </th>
-          <td mat-cell *matCellDef="let doc"> {{ doc.size }} </td>
-        </ng-container>
-        <ng-container matColumnDef="uploaded">
-          <th mat-header-cell *matHeaderCellDef> Uploaded </th>
-          <td mat-cell *matCellDef="let doc"> {{ doc.uploaded }} </td>
-        </ng-container>
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef> Status </th>
-          <td mat-cell *matCellDef="let doc">
-            <span [class]="'status-badge ' + doc.status.toLowerCase()">{{ doc.status }}</span>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef> Actions </th>
-          <td mat-cell *matCellDef="let doc">
-            <button mat-icon-button color="primary">
-              <mat-icon>visibility</mat-icon>
-            </button>
-            <button mat-icon-button color="warn">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading documents...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error && !isLoading" class="error-container">
+        <mat-icon color="warn">error</mat-icon>
+        <p>{{ error }}</p>
+        <button mat-button (click)="loadDocuments()">Retry</button>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && !error && documents.length === 0" class="empty-container">
+        <mat-icon>folder_open</mat-icon>
+        <h3>No documents yet</h3>
+        <p>Upload your first document to get started with RAG processing</p>
+      </div>
+
+      <!-- Documents Table -->
+      <div *ngIf="!isLoading && !error && documents.length > 0" class="table-container">
+        <table mat-table [dataSource]="documents" class="mat-elevation-z2">
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef> Name </th>
+            <td mat-cell *matCellDef="let doc">
+              <div class="file-name-cell">
+                <mat-icon class="file-icon">{{ getFileIcon(doc.name) }}</mat-icon>
+                <span class="file-name">{{ doc.name }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Type Column -->
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef> Type </th>
+            <td mat-cell *matCellDef="let doc"> {{ doc.file_type }} </td>
+          </ng-container>
+
+          <!-- Size Column -->
+          <ng-container matColumnDef="size">
+            <th mat-header-cell *matHeaderCellDef> Size </th>
+            <td mat-cell *matCellDef="let doc"> {{ formatFileSize(doc.size) }} </td>
+          </ng-container>
+
+          <!-- Uploaded Column -->
+          <ng-container matColumnDef="uploaded">
+            <th mat-header-cell *matHeaderCellDef> Uploaded </th>
+            <td mat-cell *matCellDef="let doc"> {{ formatDate(doc.uploaded_at) }} </td>
+          </ng-container>
+
+          <!-- Chunks Column -->
+          <ng-container matColumnDef="chunks">
+            <th mat-header-cell *matHeaderCellDef> Chunks </th>
+            <td mat-cell *matCellDef="let doc"> 
+              {{ doc.chunk_count || 'N/A' }}
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef> Status </th>
+            <td mat-cell *matCellDef="let doc">
+              <span [class]="'status-badge ' + getStatusColor(doc.status)">
+                {{ doc.status }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef> Actions </th>
+            <td mat-cell *matCellDef="let doc">
+              <button 
+                mat-icon-button 
+                color="primary" 
+                [title]="'Preview ' + doc.name"
+                (click)="previewDocument(doc)"
+                [disabled]="doc.status.toLowerCase() === 'processing'"
+              >
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button 
+                mat-icon-button 
+                color="warn" 
+                [title]="'Delete ' + doc.name"
+                (click)="deleteDocument(doc)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
     </mat-card-content>
-    <mat-card-actions>
-      <button mat-raised-button color="primary">
-        <mat-icon>upload</mat-icon>
-        Upload New Document
-      </button>
-    </mat-card-actions>
   </mat-card>
 </div>

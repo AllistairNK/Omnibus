@@ -1,0 +1,77 @@
+<div class="preview-dialog">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon class="file-icon">{{ getFileIcon() }}</mat-icon>
+      {{ data.document.name }}
+    </h2>
+    <button mat-icon-button (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <mat-tab-group [(selectedIndex)]="activeTab">
+      <mat-tab label="Preview">
+        <div class="preview-content">
+          <div *ngIf="isLoading" class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading document preview...</p>
+          </div>
+
+          <div *ngIf="error" class="error-container">
+            <mat-icon color="warn">error</mat-icon>
+            <p>{{ error }}</p>
+            <button mat-button (click)="loadPreview()">Retry</button>
+          </div>
+
+          <div *ngIf="previewContent && !isLoading && !error" class="content-container">
+            <pre>{{ previewContent }}</pre>
+          </div>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Metadata">
+        <div class="metadata-container">
+          <div class="metadata-grid">
+            <div class="metadata-item">
+              <span class="label">File Name:</span>
+              <span class="value">{{ data.document.name }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="label">File Size:</span>
+              <span class="value">{{ formatFileSize(data.document.size) }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="label">File Type:</span>
+              <span class="value">{{ data.document.file_type }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="label">Uploaded:</span>
+              <span class="value">{{ formatDate(data.document.uploaded_at) }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="label">Status:</span>
+              <span class="value">
+                <span [class]="'status-badge ' + getStatusColor()">
+                  {{ data.document.status }}
+                </span>
+              </span>
+            </div>
+            <div class="metadata-item" *ngIf="data.document.chunk_count">
+              <span class="label">Chunks:</span>
+              <span class="value">{{ data.document.chunk_count }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="label">Document ID:</span>
+              <span class="value document-id">{{ data.document.id }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="close()">Close</button>
+  </mat-dialog-actions>
+</div>

@@ -1,0 +1,88 @@
+<div class="upload-container">
+  <mat-card class="upload-card" [class.dragging]="isDragging">
+    <mat-card-header>
+      <mat-card-title>Upload Document</mat-card-title>
+      <mat-card-subtitle>Drag and drop or click to select a file</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div 
+        class="drop-zone"
+        (click)="fileInput.click()"
+        [class.has-file]="selectedFile"
+      >
+        <input
+          #fileInput
+          type="file"
+          [accept]="acceptedFileTypes"
+          (change)="onFileSelected($event)"
+          hidden
+        />
+        
+        <div class="drop-zone-content" *ngIf="!selectedFile">
+          <mat-icon class="upload-icon">cloud_upload</mat-icon>
+          <p class="drop-text">Drag & drop your file here</p>
+          <p class="or-text">or</p>
+          <button mat-raised-button color="primary">
+            <mat-icon>upload</mat-icon>
+            Browse Files
+          </button>
+          <p class="file-info">
+            Supported formats: PDF, TXT, DOCX, MD<br>
+            Max file size: 10MB
+          </p>
+        </div>
+
+        <div class="file-selected" *ngIf="selectedFile">
+          <div class="file-info-container">
+            <mat-icon class="file-icon">{{ getFileIcon(selectedFile.name) }}</mat-icon>
+            <div class="file-details">
+              <h4>{{ selectedFile.name }}</h4>
+              <p>{{ formatFileSize(selectedFile.size) }}</p>
+            </div>
+            <button 
+              mat-icon-button 
+              color="warn" 
+              (click)="removeFile(); $event.stopPropagation()"
+              [disabled]="isUploading"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <div class="upload-progress" *ngIf="isUploading">
+            <mat-progress-bar
+              mode="determinate"
+              [value]="uploadProgress?.progress || 0"
+            ></mat-progress-bar>
+            <div class="progress-info">
+              <span>Uploading... {{ uploadProgress?.progress || 0 }}%</span>
+              <span *ngIf="uploadProgress">
+                {{ formatFileSize(uploadProgress.loaded) }} of {{ formatFileSize(uploadProgress.total) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button 
+        mat-button 
+        (click)="removeFile()"
+        [disabled]="!selectedFile || isUploading"
+      >
+        Clear
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="uploadFile()"
+        [disabled]="!selectedFile || isUploading"
+      >
+        <mat-icon>upload</mat-icon>
+        Upload Document
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

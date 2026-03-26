@@ -1,0 +1,30 @@
+<div class="delete-dialog">
+  <div class="dialog-header">
+    <mat-icon class="warning-icon">warning</mat-icon>
+    <h2 mat-dialog-title>{{ data.title }}</h2>
+  </div>
+
+  <mat-dialog-content>
+    <p>{{ data.message }}</p>
+    
+    <div class="warning-box">
+      <mat-icon>error_outline</mat-icon>
+      <span>This action cannot be undone.</span>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()">
+      {{ data.cancelButtonText }}
+    </button>
+    <button 
+      mat-raised-button 
+      color="warn" 
+      (click)="confirm()"
+      cdkFocusInitial
+    >
+      <mat-icon>delete</mat-icon>
+      {{ data.confirmButtonText }}
+    </button>
+  </mat-dialog-actions>
+</div>

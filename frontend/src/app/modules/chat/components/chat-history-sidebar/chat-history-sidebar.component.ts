@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { ChatService, ChatSession } from '../../../../core/services/chat.service';
-
+import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-chat-history-sidebar',
   templateUrl: './chat-history-sidebar.component.html',
@@ -23,26 +23,24 @@ export class ChatHistorySidebarComponent implements OnInit {
   }
 
   async loadChats() {
-    this.loading = true;
-    this.error = null;
+  this.loading = true;
+  this.error = null;
+  
+  try {
+    const response = await firstValueFrom(this.chatService.getChats(1, 20));
+    this.chats = response.chats;
     
-    try {
-      const response = await this.chatService.getChats(1, 20).toPromise();
-      this.chats = response.chats;
-      
-      // Select the most recent chat if none selected
-      if (this.chats.length > 0 && !this.selectedChatId) {
-        this.selectChat(this.chats[0].id);
-      }
-    } catch (error) {
-      console.error('Error loading chats:', error);
-      this.error = 'Failed to load chat history';
-      // Load mock data for demonstration
-      this.loadMockChats();
-    } finally {
-      this.loading = false;
+    if (this.chats.length > 0 && !this.selectedChatId) {
+      this.selectChat(this.chats[0].id);
     }
+  } catch (error) {
+    console.error('Error loading chats:', error);
+    this.error = 'Failed to load chat history';
+    this.loadMockChats();
+  } finally {
+    this.loading = false;
   }
+}
 
   selectChat(chatId: string) {
     this.selectedChatId = chatId;
