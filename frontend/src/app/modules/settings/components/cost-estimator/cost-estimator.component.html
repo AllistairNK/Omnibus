@@ -1,0 +1,164 @@
+<div class="cost-estimator-container">
+  <div class="header">
+    <h2>Cost Estimation Calculator</h2>
+    <p class="subtitle">Estimate costs for different AI models based on token usage</p>
+  </div>
+
+  <div class="content">
+    <div class="form-section">
+      <form [formGroup]="estimatorForm" class="estimator-form">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>AI Model</mat-label>
+            <mat-select formControlName="modelId">
+              <mat-option *ngFor="let model of models" [value]="model.id">
+                <div class="model-option">
+                  <span class="model-name">{{ model.name }}</span>
+                  <span class="model-cost">
+                    ${{ model.inputCostPer1K.toFixed(4) }}/1K input • ${{ model.outputCostPer1K.toFixed(4) }}/1K output
+                  </span>
+                </div>
+              </mat-option>
+            </mat-select>
+            <mat-hint>Select the AI model to estimate costs for</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Input Tokens per Query</mat-label>
+            <input matInput type="number" formControlName="inputTokens">
+            <mat-icon matSuffix>input</mat-icon>
+            <mat-hint>Typically 1 token ≈ 4 characters</mat-hint>
+            <mat-error *ngIf="estimatorForm.get('inputTokens')?.hasError('required')">
+              Input tokens is required
+            </mat-error>
+            <mat-error *ngIf="estimatorForm.get('inputTokens')?.hasError('min')">
+              Must be at least 1 token
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Output Tokens per Query</mat-label>
+            <input matInput type="number" formControlName="outputTokens">
+            <mat-icon matSuffix>output</mat-icon>
+            <mat-hint>Expected response length in tokens</mat-hint>
+            <mat-error *ngIf="estimatorForm.get('outputTokens')?.hasError('required')">
+              Output tokens is required
+            </mat-error>
+            <mat-error *ngIf="estimatorForm.get('outputTokens')?.hasError('min')">
+              Must be at least 1 token
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Number of Queries</mat-label>
+            <input matInput type="number" formControlName="numberOfQueries">
+            <mat-icon matSuffix>repeat</mat-icon>
+            <mat-hint>Total number of queries to estimate</mat-hint>
+            <mat-error *ngIf="estimatorForm.get('numberOfQueries')?.hasError('required')">
+              Number of queries is required
+            </mat-error>
+            <mat-error *ngIf="estimatorForm.get('numberOfQueries')?.hasError('min')">
+              Must be at least 1 query
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="example-buttons">
+          <p>Quick examples:</p>
+          <div class="button-group">
+            <button mat-stroked-button type="button" (click)="setExample('short')">
+              Short Chat (500/200 tokens)
+            </button>
+            <button mat-stroked-button type="button" (click)="setExample('medium')">
+              Medium Document (2k/800 tokens)
+            </button>
+            <button mat-stroked-button type="button" (click)="setExample('long')">
+              Long Analysis (8k/3k tokens)
+            </button>
+            <button mat-stroked-button type="button" (click)="resetToDefaults()">
+              Reset
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="results-section" *ngIf="selectedModel">
+      <mat-card class="results-card">
+        <mat-card-header>
+          <mat-card-title>Cost Estimate</mat-card-title>
+          <mat-card-subtitle>Based on current parameters</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="model-info">
+            <div class="model-header">
+              <h3>{{ selectedModel.name }}</h3>
+              <span class="model-provider">{{ selectedModel.provider | titlecase }}</span>
+            </div>
+            <p class="model-description">{{ selectedModel.description }}</p>
+            
+            <div class="pricing-info">
+              <div class="pricing-item">
+                <span class="label">Input Cost:</span>
+                <span class="value">${{ selectedModel.inputCostPer1K.toFixed(4) }} / 1K tokens</span>
+              </div>
+              <div class="pricing-item">
+                <span class="label">Output Cost:</span>
+                <span class="value">${{ selectedModel.outputCostPer1K.toFixed(4) }} / 1K tokens</span>
+              </div>
+              <div class="pricing-item">
+                <span class="label">Context Window:</span>
+                <span class="value">{{ formatTokens(selectedModel.contextWindow) }} tokens</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cost-breakdown">
+            <h4>Cost Breakdown</h4>
+            <div class="breakdown-grid">
+              <div class="breakdown-item">
+                <div class="breakdown-label">Input Cost per Query</div>
+                <div class="breakdown-value">{{ formatCost(getCostBreakdown().inputCost) }}</div>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-label">Output Cost per Query</div>
+                <div class="breakdown-value">{{ formatCost(getCostBreakdown().outputCost) }}</div>
+              </div>
+              <div class="breakdown-item total-per-query">
+                <div class="breakdown-label">Total per Query</div>
+                <div class="breakdown-value">{{ formatCost(getCostBreakdown().perQuery) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="total-estimate">
+            <div class="total-label">Total Estimated Cost</div>
+            <div class="total-value">{{ formatCost(estimatedCost) }}</div>
+            <div class="total-subtitle">
+              for {{ estimatorForm.get('numberOfQueries')?.value }} queries
+              ({{ formatTokens(estimatorForm.get('inputTokens')?.value) }} input + 
+              {{ formatTokens(estimatorForm.get('outputTokens')?.value) }} output tokens each)
+            </div>
+          </div>
+
+          <div class="comparison-note" *ngIf="estimatedCost > 0">
+            <mat-icon>compare_arrows</mat-icon>
+            <span>
+              This is approximately {{ (estimatedCost * 100).toFixed(0) }}% of a typical coffee (${{ (estimatedCost / 0.03).toFixed(1) }} coffees)
+              or {{ (estimatedCost / 0.0001).toFixed(0) }}% of a dollar.
+            </span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <div class="loading-overlay" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading model data...</p>
+  </div>
+</div>

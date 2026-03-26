@@ -1,0 +1,449 @@
+.model-comparison-container {
+  padding: 20px;
+  background: #0a0a0a;
+  border-radius: 8px;
+  border: 1px solid #333;
+  position: relative;
+
+  .header {
+    margin-bottom: 24px;
+
+    h2 {
+      margin: 0 0 8px 0;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #aaa;
+      font-size: 14px;
+    }
+  }
+
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .search-field {
+      width: 400px;
+      max-width: 100%;
+
+      @media (max-width: 768px) {
+        width: 100%;
+      }
+    }
+
+    .control-buttons {
+      display: flex;
+      gap: 12px;
+
+      button {
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+
+  .comparison-section {
+    margin-bottom: 32px;
+    padding: 20px;
+    background: rgba(0, 255, 0, 0.05);
+    border: 1px solid rgba(0, 255, 0, 0.2);
+    border-radius: 8px;
+
+    h3 {
+      margin: 0 0 20px 0;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      font-size: 18px;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+
+      .comparison-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 6px;
+        overflow: hidden;
+
+        .card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px;
+          background: rgba(0, 0, 0, 0.3);
+          border-bottom: 1px solid #333;
+          position: relative;
+
+          .model-name {
+            font-weight: bold;
+            color: #fff;
+            font-size: 18px;
+          }
+
+          .model-provider {
+            font-size: 12px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+          }
+
+          .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            color: #888;
+
+            &:hover {
+              color: #ff4444;
+            }
+          }
+        }
+
+        .card-content {
+          padding: 16px;
+
+          .model-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #333;
+
+            &:last-child {
+              border-bottom: none;
+              margin-bottom: 0;
+              padding-bottom: 0;
+            }
+
+            .stat-label {
+              color: #aaa;
+              font-size: 14px;
+            }
+
+            .stat-value {
+              color: #00ff00;
+              font-family: 'Courier New', monospace;
+              font-weight: bold;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+
+              .stat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+              }
+            }
+          }
+
+          .capabilities {
+            .capabilities-label {
+              display: block;
+              color: #aaa;
+              font-size: 14px;
+              margin-bottom: 8px;
+            }
+
+            .capability-tags {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 6px;
+
+              .capability-tag {
+                background: rgba(0, 255, 0, 0.1);
+                color: #00ff00;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 11px;
+                font-family: 'Courier New', monospace;
+
+                &.more {
+                  background: rgba(255, 255, 255, 0.1);
+                  color: #aaa;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .table-section {
+    position: relative;
+    border: 1px solid #333;
+    border-radius: 4px;
+    overflow: hidden;
+
+    table {
+      width: 100%;
+      background: transparent;
+
+      th {
+        background: #1a1a1a;
+        color: #00ff00;
+        font-weight: bold;
+        border-bottom: 2px solid #333;
+        padding: 16px;
+        font-family: 'Courier New', monospace;
+        white-space: nowrap;
+      }
+
+      td {
+        padding: 16px;
+        border-bottom: 1px solid #333;
+        color: #ccc;
+
+        .model-name-cell {
+          .model-name {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+          }
+
+          .model-description {
+            font-size: 12px;
+            color: #888;
+            line-height: 1.4;
+          }
+        }
+
+        .provider-cell {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-weight: bold;
+          font-family: 'Courier New', monospace;
+
+          .provider-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+        }
+
+        .context-window-cell,
+        .speed-cell,
+        .intelligence-cell {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .cell-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+            color: #666;
+          }
+        }
+
+        .cost-cell {
+          font-weight: bold;
+          font-family: 'Courier New', monospace;
+
+          &.free {
+            color: #00ff00;
+          }
+
+          &:not(.free) {
+            color: #ffaa00;
+          }
+        }
+
+        .capabilities-cell {
+          .capability-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+
+            .capability-tag {
+              background: rgba(0, 255, 0, 0.1);
+              color: #00ff00;
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-size: 10px;
+              font-family: 'Courier New', monospace;
+
+              &.more {
+                background: rgba(255, 255, 255, 0.1);
+                color: #aaa;
+              }
+            }
+          }
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 8px;
+
+          button {
+            mat-icon {
+              font-size: 18px;
+              width: 18px;
+              height: 18px;
+            }
+          }
+        }
+      }
+
+      tr:hover {
+        background: rgba(0, 255, 0, 0.05);
+      }
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+
+      p {
+        margin-top: 16px;
+        color: #00ff00;
+        font-family: 'Courier New', monospace;
+      }
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: #666;
+
+      mat-icon {
+        font-size: 60px;
+        width: 60px;
+        height: 60px;
+        margin-bottom: 16px;
+        color: #333;
+      }
+
+      h3 {
+        margin: 0 0 8px 0;
+        color: #888;
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+      }
+    }
+  }
+
+  .selected-model-details {
+    margin-top: 32px;
+    padding: 20px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+
+    .details-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #333;
+
+      h3 {
+        margin: 0;
+        color: #00ff00;
+        font-family: 'Courier New', monospace;
+        font-size: 20px;
+      }
+
+      button {
+        color: #888;
+
+        &:hover {
+          color: #fff;
+        }
+      }
+    }
+
+    .details-content {
+      .detail-row {
+        display: flex;
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #333;
+
+        &:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+          padding-bottom: 0;
+        }
+
+        .detail-label {
+          width: 200px;
+          color: #aaa;
+          font-size: 14px;
+          font-weight: bold;
+        }
+
+        .detail-value {
+          flex: 1;
+          color: #fff;
+          font-family: 'Courier New', monospace;
+        }
+
+        .capabilities-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+
+          .capability-badge {
+            background: rgba(0, 255, 0, 0.1);
+            color: #00ff00;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Material form field customizations
+::ng-deep {
+  .model-comparison-container {
+    .mat-form-field-outline {
+      color: #444;
+    }
+
+    .mat-form-field-outline-thick {
+      color: #00ff00;
+    }
+
+    .mat-form-field-label {
+      color: #888;
+    }
+
+    .mat-input-element {
+      color: #fff;
+      font-family: 'Courier New', monospace;
+    }
+
+    .mat-sort-header-arrow {
+      color: #00ff00;
+    }
+  }
+}

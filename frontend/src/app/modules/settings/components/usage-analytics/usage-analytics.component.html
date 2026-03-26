@@ -1,0 +1,216 @@
+<div class="usage-analytics-container">
+  <div class="header">
+    <h2>Usage Analytics Dashboard</h2>
+    <p class="subtitle">Monitor token usage, costs, and model performance</p>
+  </div>
+
+  <div class="controls">
+    <div class="time-range-selector">
+      <button mat-stroked-button [class.active]="selectedTimeRange === '7d'" (click)="changeTimeRange('7d')">
+        7 Days
+      </button>
+      <button mat-stroked-button [class.active]="selectedTimeRange === '30d'" (click)="changeTimeRange('30d')">
+        30 Days
+      </button>
+      <button mat-stroked-button [class.active]="selectedTimeRange === '90d'" (click)="changeTimeRange('90d')">
+        90 Days
+      </button>
+    </div>
+
+    <div class="control-buttons">
+      <button mat-stroked-button (click)="exportData()">
+        <mat-icon>download</mat-icon>
+        Export Data
+      </button>
+      <button mat-raised-button color="primary" (click)="refresh()" [disabled]="isLoading">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="summary-cards" *ngIf="analytics">
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Total Tokens Used</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ formatTokens(analytics.totalTokens) }}</div>
+        <div class="stat-label">tokens</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Total Cost</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ formatCost(analytics.totalCost) }}</div>
+        <div class="stat-label">USD</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Average Cost/Day</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ formatCost(analytics.totalCost / 7) }}</div>
+        <div class="stat-label">USD (7-day avg)</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Models Used</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ Object.keys(analytics.tokensByModel).length }}</div>
+        <div class="stat-label">different models</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="charts-grid" *ngIf="analytics">
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title>Cost by Model</mat-card-title>
+        <mat-card-subtitle>Distribution of costs across different AI models</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="bar-chart">
+          <div class="bar-chart-item" *ngFor="let item of costByModelChart.labels; let i = index">
+            <div class="bar-label">
+              <span class="model-name">{{ item }}</span>
+              <span class="model-cost">{{ formatCost(costByModelChart.values[i]) }}</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" 
+                   [style.width]="getBarWidth(costByModelChart.values[i], getMaxValue(costByModelChart.values))"
+                   [style.background]="costByModelChart.colors[i]">
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title>Token Distribution</mat-card-title>
+        <mat-card-subtitle>Percentage of tokens used by each model</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="pie-chart">
+          <div class="pie-chart-visual">
+            <div class="pie-segment" *ngFor="let item of tokenDistributionChart.labels; let i = index"
+                 [style.background]="tokenDistributionChart.colors[i]"
+                 [style.opacity]="0.7">
+              <div class="segment-label" *ngIf="tokenDistributionChart.values[i] > 0">
+                {{ getPieSegment(i, analytics.totalTokens) }}
+              </div>
+            </div>
+          </div>
+          <div class="pie-legend">
+            <div class="legend-item" *ngFor="let item of tokenDistributionChart.labels; let i = index">
+              <div class="legend-color" [style.background]="tokenDistributionChart.colors[i]"></div>
+              <div class="legend-text">
+                <span class="legend-label">{{ item }}</span>
+                <span class="legend-value">{{ formatTokens(tokenDistributionChart.values[i]) }} tokens</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card full-width">
+      <mat-card-header>
+        <mat-card-title>Daily Usage Trend</mat-card-title>
+        <mat-card-subtitle>Tokens and costs over time</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="line-chart">
+          <div class="chart-grid">
+            <div class="grid-line" *ngFor="let line of [0, 1, 2, 3, 4]"></div>
+          </div>
+          <div class="data-points">
+            <div class="data-point" *ngFor="let date of dailyUsageChart.dates; let i = index"
+                 [style.left]="(i / (dailyUsageChart.dates.length - 1)) * 100 + '%'">
+              <div class="point-tooltip">
+                <div class="tooltip-date">{{ date }}</div>
+                <div class="tooltip-tokens">{{ formatTokens(dailyUsageChart.tokens[i]) }} tokens</div>
+                <div class="tooltip-cost">{{ formatCost(dailyUsageChart.costs[i]) }} cost</div>
+              </div>
+              <div class="point-circle" [style.background]="'#00ff00'"></div>
+            </div>
+          </div>
+          <div class="chart-axis">
+            <div class="axis-label" *ngFor="let date of dailyUsageChart.dates; let i = index"
+                 [style.left]="(i / (dailyUsageChart.dates.length - 1)) * 100 + '%'">
+              {{ date.split('-').slice(1).join('-') }}
+            </div>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-color" style="background: #00ff00;"></div>
+            <span class="legend-label">Tokens (scale: thousands)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #ffc800;"></div>
+            <span class="legend-label">Cost (USD)</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="model-breakdown" *ngIf="analytics">
+    <h3>Detailed Model Breakdown</h3>
+    <div class="breakdown-table">
+      <div class="table-header">
+        <div class="header-cell">Model</div>
+        <div class="header-cell">Tokens Used</div>
+        <div class="header-cell">Percentage</div>
+        <div class="header-cell">Cost</div>
+        <div class="header-cell">Cost/Token</div>
+      </div>
+      <div class="table-row" *ngFor="let model of costByModelChart.labels; let i = index">
+        <div class="table-cell model-cell">
+          <div class="model-color" [style.background]="costByModelChart.colors[i]"></div>
+          <span class="model-name">{{ model }}</span>
+        </div>
+        <div class="table-cell">{{ formatTokens(tokenDistributionChart.values[i]) }}</div>
+        <div class="table-cell">
+          <div class="percentage-bar">
+            <div class="percentage-fill" 
+                 [style.width]="getPieSegment(i, analytics.totalTokens)"
+                 [style.background]="costByModelChart.colors[i]">
+            </div>
+            <span class="percentage-text">{{ getPieSegment(i, analytics.totalTokens) }}</span>
+          </div>
+        </div>
+        <div class="table-cell">{{ formatCost(costByModelChart.values[i]) }}</div>
+        <div class="table-cell">
+          {{ formatCost(tokenDistributionChart.values[i] > 0 ? costByModelChart.values[i] / tokenDistributionChart.values[i] * 1000 : 0) }}/1K
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-overlay" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading analytics data...</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && !analytics">
+    <mat-icon>analytics</mat-icon>
+    <h3>No analytics data available</h3>
+    <p>Start using the AI chatbot to generate usage analytics</p>
+    <button mat-raised-button color="primary" (click)="refresh()">
+      <mat-icon>refresh</mat-icon>
+      Try Again
+    </button>
+  </div>
+</div>

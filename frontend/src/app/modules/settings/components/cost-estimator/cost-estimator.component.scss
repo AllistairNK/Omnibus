@@ -1,0 +1,351 @@
+.cost-estimator-container {
+  padding: 20px;
+  background: #0a0a0a;
+  border-radius: 8px;
+  border: 1px solid #333;
+  position: relative;
+
+  .header {
+    margin-bottom: 24px;
+
+    h2 {
+      margin: 0 0 8px 0;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #aaa;
+      font-size: 14px;
+    }
+  }
+
+  .content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .form-section {
+    .estimator-form {
+      .form-row {
+        margin-bottom: 20px;
+
+        &.full-width {
+          width: 100%;
+        }
+
+        &.half-width {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+
+          @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+          }
+        }
+      }
+
+      .model-option {
+        display: flex;
+        flex-direction: column;
+        padding: 4px 0;
+
+        .model-name {
+          font-weight: bold;
+          color: #fff;
+        }
+
+        .model-cost {
+          font-size: 12px;
+          color: #888;
+          margin-top: 2px;
+        }
+      }
+
+      .example-buttons {
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #333;
+
+        p {
+          margin: 0 0 12px 0;
+          color: #aaa;
+          font-size: 14px;
+        }
+
+        .button-group {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+
+          button {
+            flex: 1;
+            min-width: 150px;
+            border-color: #444;
+            color: #ccc;
+
+            &:hover {
+              border-color: #00ff00;
+              color: #00ff00;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .results-section {
+    .results-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      height: 100%;
+
+      mat-card-header {
+        padding-bottom: 16px;
+        border-bottom: 1px solid #333;
+
+        mat-card-title {
+          color: #00ff00;
+          font-family: 'Courier New', monospace;
+          font-size: 20px;
+        }
+
+        mat-card-subtitle {
+          color: #888;
+        }
+      }
+
+      mat-card-content {
+        padding: 20px 0;
+      }
+
+      .model-info {
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #333;
+
+        .model-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+
+          h3 {
+            margin: 0;
+            color: #fff;
+            font-size: 18px;
+          }
+
+          .model-provider {
+            background: rgba(0, 255, 0, 0.1);
+            color: #00ff00;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+          }
+        }
+
+        .model-description {
+          margin: 0 0 16px 0;
+          color: #aaa;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .pricing-info {
+          .pricing-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+
+            .label {
+              color: #ccc;
+              font-size: 14px;
+            }
+
+            .value {
+              color: #00ff00;
+              font-family: 'Courier New', monospace;
+              font-weight: bold;
+              font-size: 14px;
+            }
+          }
+        }
+      }
+
+      .cost-breakdown {
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #333;
+
+        h4 {
+          margin: 0 0 16px 0;
+          color: #fff;
+          font-size: 16px;
+        }
+
+        .breakdown-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+
+          @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+          }
+
+          .breakdown-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            text-align: center;
+
+            &.total-per-query {
+              background: rgba(0, 255, 0, 0.1);
+              border: 1px solid rgba(0, 255, 0, 0.3);
+            }
+
+            .breakdown-label {
+              font-size: 12px;
+              color: #aaa;
+              margin-bottom: 8px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+
+            .breakdown-value {
+              font-size: 18px;
+              font-weight: bold;
+              color: #00ff00;
+              font-family: 'Courier New', monospace;
+            }
+          }
+        }
+      }
+
+      .total-estimate {
+        text-align: center;
+        padding: 24px;
+        background: rgba(0, 255, 0, 0.05);
+        border-radius: 8px;
+        border: 1px solid rgba(0, 255, 0, 0.2);
+        margin-bottom: 20px;
+
+        .total-label {
+          font-size: 14px;
+          color: #aaa;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 8px;
+        }
+
+        .total-value {
+          font-size: 48px;
+          font-weight: bold;
+          color: #00ff00;
+          font-family: 'Courier New', monospace;
+          margin-bottom: 8px;
+          line-height: 1;
+        }
+
+        .total-subtitle {
+          font-size: 14px;
+          color: #888;
+          line-height: 1.4;
+        }
+      }
+
+      .comparison-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        border-left: 4px solid #ffaa00;
+
+        mat-icon {
+          color: #ffaa00;
+          font-size: 18px;
+          margin-top: 2px;
+        }
+
+        span {
+          color: #ccc;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+      }
+    }
+  }
+
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 8px;
+
+    p {
+      margin-top: 16px;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+    }
+  }
+}
+
+// Material form field customizations
+::ng-deep {
+  .cost-estimator-container {
+    .mat-form-field-outline {
+      color: #444;
+    }
+
+    .mat-form-field-outline-thick {
+      color: #00ff00;
+    }
+
+    .mat-form-field-label {
+      color: #888;
+    }
+
+    .mat-input-element {
+      color: #fff;
+      font-family: 'Courier New', monospace;
+    }
+
+    .mat-select-value {
+      color: #fff;
+    }
+
+    .mat-select-arrow {
+      color: #888;
+    }
+
+    .mat-hint {
+      color: #666;
+    }
+
+    .mat-error {
+      color: #ff4444;
+    }
+  }
+}

@@ -1,0 +1,136 @@
+<div class="token-usage-container">
+  <div class="header">
+    <h2>Token Usage Tracking</h2>
+    <div class="summary-cards">
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>Total Tokens Used</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="stat-value">{{ formatTokens(totalTokens) }}</div>
+          <div class="stat-label">tokens</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>Total Estimated Cost</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="stat-value">{{ formatCost(totalCost) }}</div>
+          <div class="stat-label">USD</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>Average Cost/Day</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="stat-value">{{ formatCost(totalCost / 7) }}</div>
+          <div class="stat-label">USD (7-day avg)</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button mat-raised-button color="primary" (click)="refresh()" [disabled]="isLoading">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+    <span class="spacer"></span>
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Filter by model</mat-label>
+      <mat-select multiple>
+        <mat-option value="all">All Models</mat-option>
+        <mat-option value="gpt-5-nano">GPT-5 Nano</mat-option>
+        <mat-option value="gpt-5-turbo">GPT-5 Turbo</mat-option>
+        <mat-option value="claude-3-opus">Claude 3 Opus</mat-option>
+        <mat-option value="claude-3-sonnet">Claude 3 Sonnet</mat-option>
+        <mat-option value="gemini-pro">Gemini Pro</mat-option>
+        <mat-option value="gemini-ultra">Gemini Ultra</mat-option>
+        <mat-option value="local-llama">Local Llama</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="table-container">
+    <table mat-table [dataSource]="dataSource" class="mat-elevation-z1">
+      <!-- Date Column -->
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Date</th>
+        <td mat-cell *matCellDef="let element">{{ element.date }}</td>
+      </ng-container>
+
+      <!-- Model Column -->
+      <ng-container matColumnDef="model">
+        <th mat-header-cell *matHeaderCellDef>Model</th>
+        <td mat-cell *matCellDef="let element">
+          <span class="model-badge" [class]="'model-' + element.modelId">
+            {{ element.modelId }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Input Tokens Column -->
+      <ng-container matColumnDef="inputTokens">
+        <th mat-header-cell *matHeaderCellDef>Input Tokens</th>
+        <td mat-cell *matCellDef="let element">
+          <div class="token-count">
+            <mat-icon class="token-icon">input</mat-icon>
+            {{ formatTokens(element.inputTokens) }}
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Output Tokens Column -->
+      <ng-container matColumnDef="outputTokens">
+        <th mat-header-cell *matHeaderCellDef>Output Tokens</th>
+        <td mat-cell *matCellDef="let element">
+          <div class="token-count">
+            <mat-icon class="token-icon">output</mat-icon>
+            {{ formatTokens(element.outputTokens) }}
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Total Tokens Column -->
+      <ng-container matColumnDef="totalTokens">
+        <th mat-header-cell *matHeaderCellDef>Total Tokens</th>
+        <td mat-cell *matCellDef="let element">
+          <div class="total-tokens">
+            {{ formatTokens(element.inputTokens + element.outputTokens) }}
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Estimated Cost Column -->
+      <ng-container matColumnDef="estimatedCost">
+        <th mat-header-cell *matHeaderCellDef>Estimated Cost</th>
+        <td mat-cell *matCellDef="let element">
+          <div class="cost-display" [class.free]="element.estimatedCost === 0">
+            {{ formatCost(element.estimatedCost) }}
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <div *ngIf="isLoading" class="loading-overlay">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading token usage data...</p>
+    </div>
+
+    <div *ngIf="!isLoading && dataSource.data.length === 0" class="empty-state">
+      <mat-icon>data_usage</mat-icon>
+      <h3>No token usage data available</h3>
+      <p>Start chatting with the AI to see token usage statistics here.</p>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <mat-icon>info</mat-icon>
+    <span>Token usage and cost estimates are based on provider pricing as of January 2026. Actual costs may vary.</span>
+  </div>
+</div>
