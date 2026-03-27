@@ -40,8 +40,11 @@
 .ascii-art pre {
   max-width: 100%;
   overflow: hidden;
+  font-size: 0.45rem;
   white-space: pre-wrap;
   word-break: break-all;
+  display: inline-block;
+  margin: 0;
 }
 
 .cursor-blink {
@@ -232,6 +235,7 @@
   .header-left, .header-right {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
   }
   
   .ascii-art pre {
@@ -257,6 +261,10 @@
   .footer-left, .footer-right {
     width: 100%;
     justify-content: center;
+  }
+  
+  .system-info {
+    width: 100%;
   }
 }
 

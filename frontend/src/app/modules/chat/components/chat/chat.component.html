@@ -128,6 +128,7 @@
     <div class="terminal-input">
       <div class="input-line">
         <span class="prompt">user&#64;chatbot:~$</span>
+        <span *ngIf="!newMessage" class="input-cursor blinking-cursor"></span>
         <input 
           type="text" 
           class="terminal-input-field"
@@ -137,7 +138,6 @@
           placeholder="Type your message or command..."
           autofocus
         />
-        <span *ngIf="!newMessage" class="input-cursor blinking-cursor"></span>
         <button class="send-button" (click)="sendMessage()" title="Send (Enter)" [disabled]="isStreaming">
           <span class="send-icon">⏎</span>
         </button>
