@@ -23,6 +23,7 @@ export class AuthService {
       tap((response: any) => {
         if (response.access_token) {                    // was response.token
           this.setToken(response.access_token);         // was response.token
+          this.setUser(response.user);
           this.isAuthenticatedSubject.next(true);
           this.store.dispatch(AuthActions.loginSuccess({
             token: response.access_token,
@@ -36,12 +37,14 @@ export class AuthService {
   bypassLogin(): void {
     // Set a dummy token to bypass authentication
     const dummyToken = 'dummy_token_bypass_' + Date.now();
+    const dummyUser = { email: 'demo@example.com', name: 'Demo User' };
     this.setToken(dummyToken);
+    this.setUser(dummyUser);
     this.isAuthenticatedSubject.next(true);
     // Update NgRx store state
     this.store.dispatch(AuthActions.loginSuccess({
       token: dummyToken,
-      user: { email: 'demo@example.com', name: 'Demo User' }
+      user: dummyUser
     }));
   }
 
@@ -52,6 +55,7 @@ export class AuthService {
           // Show "check your email" message — don't set token
         } else if (response.access_token) {
           this.setToken(response.access_token);
+          this.setUser(response.user);
           this.isAuthenticatedSubject.next(true);
           this.store.dispatch(AuthActions.loginSuccess({
             token: response.access_token,
@@ -67,6 +71,7 @@ export class AuthService {
     return this.http.post('/api/v1/auth/logout', {}).pipe(
       tap(() => {
         this.removeToken();
+        this.removeUser();
         this.isAuthenticatedSubject.next(false);
         // Update NgRx store state
         this.store.dispatch(AuthActions.logout());
@@ -74,6 +79,7 @@ export class AuthService {
       catchError((error) => {
         // Even if backend call fails, clear local auth state
         this.removeToken();
+        this.removeUser();
         this.isAuthenticatedSubject.next(false);
         this.store.dispatch(AuthActions.logout());
         return of(null);
