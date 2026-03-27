@@ -8,6 +8,9 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* ASCII Art Section */
@@ -23,8 +26,10 @@
   font-size: 10px;
   line-height: 1.2;
   margin: 0;
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-all;
   overflow: hidden;
+  max-width: 100%;
 }
 
 .terminal-header {
@@ -60,10 +65,11 @@
 .terminal-output {
   flex: 1;
   padding: 20px;
-  overflow-y: auto;
-  max-height: 60vh;
+  overflow-y: hidden; /* Changed from auto to hidden - let virtual scroll handle scrolling */
   background: #000000;
   border-bottom: 1px solid #333;
+  display: flex;
+  flex-direction: column;
 }
 
 .terminal-line {
@@ -320,6 +326,32 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .terminal-container {
+    padding: 15px;
+  }
+  
+  .ascii-text {
+    font-size: 9px;
+  }
+  
+  .terminal-line {
+    font-size: 13px;
+  }
+  
+  .message-content {
+    max-width: 90%;
+  }
+  
+  .ascii-emotion-container {
+    padding: 15px;
+  }
+  
+  .ascii-emotion {
+    font-size: 10px;
+  }
+}
+
 @media (max-width: 768px) {
   .terminal-container {
     padding: 10px;
@@ -336,6 +368,110 @@
   .terminal-status {
     flex-wrap: wrap;
     gap: 10px;
+  }
+  
+  .ascii-emotion-container {
+    padding: 10px;
+  }
+  
+  .ascii-emotion {
+    font-size: 9px;
+  }
+  
+  .emotion-controls {
+    gap: 6px;
+  }
+  
+  .emotion-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  
+  .terminal-input-field {
+    font-size: 13px;
+    padding: 7px 9px;
+  }
+  
+  .send-button, .stop-button {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+  
+  .message-metadata {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .terminal-container {
+    padding: 8px;
+  }
+  
+  .ascii-text {
+    font-size: 7px;
+  }
+  
+  .terminal-header {
+    font-size: 12px;
+  }
+  
+  .terminal-line {
+    font-size: 11px;
+  }
+  
+  .message-content {
+    max-width: 95%;
+    padding: 6px 10px;
+  }
+  
+  .ascii-emotion-container {
+    padding: 8px;
+  }
+  
+  .ascii-emotion {
+    font-size: 8px;
+  }
+  
+  .emotion-controls {
+    gap: 4px;
+  }
+  
+  .emotion-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  
+  .terminal-input {
+    padding: 10px 15px;
+  }
+  
+  .terminal-input-field {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  
+  .send-button, .stop-button {
+    padding: 6px 10px;
+    font-size: 12px;
+    margin-left: 5px;
+  }
+  
+  .input-line {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .send-button, .stop-button {
+    width: 100%;
+    margin-left: 0;
+  }
+  
+  .terminal-status {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }
 
@@ -715,8 +851,9 @@
 .terminal-viewport {
   height: 100%;
   min-height: 400px;
-  max-height: 60vh;
+  flex: 1;
   overflow: auto;
+  scroll-behavior: smooth;
 }
 
 .terminal-viewport .cdk-virtual-scroll-content-wrapper {
@@ -736,11 +873,6 @@
 .terminal-line {
   contain: content;
   will-change: transform;
-}
-
-/* Smooth scrolling */
-.terminal-viewport {
-  scroll-behavior: smooth;
 }
 
 /* ASCII Emotion Display - Task 9.1 */
@@ -863,12 +995,21 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Courier New', monospace;
+  position: relative;
+  overflow: hidden;
 }
 
 .emotion-btn:hover {
   background: #333;
   color: #fff;
   border-color: #00aa55;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 170, 85, 0.3);
+}
+
+.emotion-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 170, 85, 0.2);
 }
 
 .emotion-btn.active {
@@ -876,6 +1017,18 @@
   color: #00ff00;
   border-color: #00ff00;
   font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+  animation: pulse-glow 2s infinite;
+}
+
+.emotion-btn.active:hover {
+  background: #006600;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.4); }
+  50% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.7); }
 }
 
 /* Animated thinking indicators */

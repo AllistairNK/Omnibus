@@ -1,9 +1,9 @@
-<div class="terminal-app">
+<div class="terminal-app" role="application" aria-label="AI Chatbot with RAG Terminal Interface">
   <!-- Terminal Header -->
-  <header class="terminal-header">
+  <header class="terminal-header" role="banner">
     <div class="header-left">
       <div class="logo">
-        <span class="ascii-art">
+        <span class="ascii-art" aria-hidden="true">
         <pre style="font-size: 0.45rem; display: inline-block; margin: 0;">
 MMP"""""YMM                     oo dP                         
 M' .mmm. `M                        88                         
@@ -11,38 +11,52 @@ M  MMMMM  M 88d8b.d8b. 88d888b. dP 88d888b. dP    dP .d8888b.
 M  MMMMM  M 88'`88'`88 88'  `88 88 88'  `88 88    88 Y8ooooo. 
 M. `MMM' .M 88  88  88 88    88 88 88.  .88 88.  .88       88 
 MMb     dMM dP  dP  dP dP    dP dP 88Y8888' `88888P' `88888P' 
-MMMMMMMMMMM                                                   
+MMMMMMMMMM                                                   
           </pre><span class="cursor-blink">_</span></span>
+        <span class="visually-hidden">AI Chatbot with RAG</span>
       </div>
-      <div class="system-info">
-        <span class="status-indicator online"></span>
+      <div class="system-info" aria-live="polite" aria-atomic="true">
+        <span class="status-indicator online" aria-hidden="true"></span>
         <span class="status-text">System Online</span>
+        <span class="visually-hidden">System status: Online</span>
       </div>
     </div>
     <div class="header-right">
-      <nav class="terminal-nav">
-        <a mat-button routerLink="/chat" routerLinkActive="active">Chat</a>
-        <a mat-button routerLink="/documents" routerLinkActive="active">Documents</a>
-        <a mat-button routerLink="/settings" routerLinkActive="active">Settings</a>
-        <a mat-button routerLink="/auth/login" routerLinkActive="active">Login</a>
+      <nav class="terminal-nav" aria-label="Main Navigation">
+        <a mat-button routerLink="/chat" routerLinkActive="active" aria-label="Chat Interface" aria-current="page">
+          Chat
+        </a>
+        <a mat-button routerLink="/documents" routerLinkActive="active" aria-label="Document Management">
+          Documents
+        </a>
+        <a mat-button routerLink="/settings" routerLinkActive="active" aria-label="Settings">
+          Settings
+        </a>
+        <a mat-button routerLink="/auth/login" routerLinkActive="active" aria-label="Login">
+          Login
+        </a>
       </nav>
-      <div class="user-info" *ngIf="false">
-        <mat-icon>person</mat-icon>
-        <span>user&#64;example.com</span>
+      <div class="header-controls">
+        <app-theme-toggle />
+        <div class="user-info" *ngIf="false" aria-label="User Information">
+          <mat-icon aria-hidden="true">person</mat-icon>
+          <span>user&#64;example.com</span>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- Main Content -->
-  <main class="terminal-main">
+  <main class="terminal-main" role="main">
     <router-outlet />
   </main>
 
   <!-- Terminal Footer -->
-  <footer class="terminal-footer">
+  <footer class="terminal-footer" role="contentinfo">
     <div class="footer-left">
-      <span class="command-prompt">$</span>
+      <span class="command-prompt" aria-hidden="true">$</span>
       <span class="current-route">/{{ currentRoute }}</span>
+      <span class="visually-hidden">Current location: {{ currentRoute }}</span>
     </div>
     <div class="footer-right">
       <span class="timestamp">{{ currentTime | date:'HH:mm:ss' }} UTC</span>

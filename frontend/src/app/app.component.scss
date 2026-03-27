@@ -5,6 +5,9 @@
   background-color: #0a0a0a;
   color: #00ff00;
   font-family: 'Courier New', monospace;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .terminal-header {
@@ -30,6 +33,15 @@
 
 .ascii-art {
   color: #00ffcc;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.ascii-art pre {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .cursor-blink {
@@ -65,6 +77,12 @@
   gap: 2rem;
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .terminal-nav {
   display: flex;
   gap: 1rem;
@@ -77,16 +95,42 @@
   border: 1px solid transparent;
   border-radius: 4px;
   transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
 }
 
 .terminal-nav a:hover {
   border-color: #00ff00;
-  background-color: rgba(0, 255, 0, 0.1);
+  background-color: rgba(0, 255, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 255, 0, 0.2);
+}
+
+.terminal-nav a:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 255, 0, 0.1);
 }
 
 .terminal-nav a.active {
-  background-color: rgba(0, 255, 0, 0.2);
+  background-color: rgba(0, 255, 0, 0.25);
   border-color: #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.terminal-nav a.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #00ff00;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .user-info {
@@ -99,6 +143,9 @@
 .terminal-main {
   flex: 1;
   padding: 2rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .terminal-footer {
@@ -143,4 +190,100 @@
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+  .terminal-header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .header-left {
+    gap: 1rem;
+  }
+  
+  .ascii-art pre {
+    font-size: 0.35rem;
+  }
+  
+  .terminal-nav {
+    gap: 0.5rem;
+  }
+  
+  .terminal-nav a {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .header-controls {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .terminal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header-left, .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .ascii-art pre {
+    font-size: 0.3rem;
+  }
+  
+  .terminal-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .terminal-main {
+    padding: 1rem;
+  }
+  
+  .terminal-footer {
+    padding: 0.8rem 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .footer-left, .footer-right {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .terminal-header {
+    padding: 0.8rem;
+  }
+  
+  .ascii-art pre {
+    font-size: 0.25rem;
+  }
+  
+  .system-info {
+    font-size: 0.8rem;
+  }
+  
+  .terminal-nav {
+    gap: 0.3rem;
+  }
+  
+  .terminal-nav a {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .theme-toggle-btn {
+    width: 36px;
+    height: 36px;
+  }
 }
