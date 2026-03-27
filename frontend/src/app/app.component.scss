@@ -143,6 +143,37 @@
   font-size: 0.9rem;
 }
 
+.logout-text {
+  margin-left: 0.25rem;
+}
+
+.header-controls button {
+  color: #00ff00;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.header-controls button:hover {
+  border-color: #00ff00;
+  background-color: rgba(0, 255, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 255, 0, 0.2);
+}
+
+.header-controls button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 255, 0, 0.1);
+}
+
 .terminal-main {
   flex: 1;
   padding: 2rem;

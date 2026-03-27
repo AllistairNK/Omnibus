@@ -1,6 +1,344 @@
-# AI Chatbot with RAG - Production Deployment Guide
+# AI Chatbot with RAG - Deployment Guide
 
 ## Overview
+This guide provides comprehensive instructions for both local development and production deployment of the AI Chatbot with RAG application.
+
+---
+
+# Local Development Guide
+
+This section covers setting up and running the application locally for development and testing.
+
+## Prerequisites for Local Development
+
+### System Requirements
+- **Python 3.11+** with pip
+- **Node.js 18+** and npm
+- **Docker** (for ChromaDB)
+- **Git** for version control
+
+### Accounts & API Keys Required
+1. **Supabase Account** - Free tier sufficient for development
+2. **OpenAI API Key** - For GPT models and embeddings (required)
+3. **Anthropic API Key** - Optional, for Claude models
+4. **Google Gemini API Key** - Optional, for Gemini models
+
+## Step 1: Clone and Setup Repository
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd omnibus
+```
+
+## Step 2: Backend Setup
+
+### 2.1 Install Python Dependencies
+
+```bash
+cd backend
+
+# Create and activate virtual environment (recommended)
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install backend dependencies
+pip install --upgrade pip
+pip install -e .
+```
+
+### 2.2 Configure Environment Variables
+
+1. Copy the example environment file:
+   ```bash
+   copy .env.example .env  # Windows
+   # or
+   cp .env.example .env    # macOS/Linux
+   ```
+
+2. Edit `.env` file with your API keys:
+
+   **Required API Keys:**
+   - **Supabase Configuration** (get from Supabase project dashboard):
+     - `SUPABASE_URL`: Your Supabase project URL
+     - `SUPABASE_KEY`: Your anon/public key
+     - `SUPABASE_JWT_SECRET`: JWT secret from API settings
+     - `DATABASE_URL`: PostgreSQL connection string from Supabase
+
+   - **OpenAI API** (required for embeddings and chat):
+     - `OPENAI_API_KEY`: Your OpenAI API key (starts with `sk-`)
+
+   **Optional API Keys:**
+   - `ANTHROPIC_API_KEY`: For Claude models
+   - `GEMINI_API_KEY`: For Google Gemini models
+
+   **Local Development Settings:**
+   ```env
+   ENVIRONMENT=development
+   DEBUG=true
+   CHROMA_HOST=localhost
+   CHROMA_PORT=8000
+   BACKEND_CORS_ORIGINS=http://localhost:4200,http://localhost:3000
+   SECRET_KEY=development-secret-key-change-in-production
+   ```
+
+### 2.3 Start ChromaDB with Docker
+
+```bash
+# Start ChromaDB vector database
+docker-compose up -d chromadb
+
+# Verify ChromaDB is running
+docker ps | findstr chromadb  # Windows
+# or
+docker ps | grep chromadb     # macOS/Linux
+```
+
+### 2.4 Run Database Migrations
+
+```bash
+# Apply database schema
+python migrations/run_migrations.py
+```
+
+### 2.5 Start Backend Server
+
+```bash
+# Development server with auto-reload
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+The backend will be available at: `http://localhost:8000`
+
+**Verify Backend is Running:**
+```bash
+curl http://localhost:8000/health
+# Should return: {"status":"healthy","service":"AI Chatbot Backend",...}
+```
+
+**API Documentation:**
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## Step 3: Frontend Setup
+
+### 3.1 Install Node.js Dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+### 3.2 Configure Frontend Proxy
+
+The frontend uses relative URLs (`/api/v1/*`) which need to be proxied to the backend. Create a proxy configuration file:
+
+**Create `frontend/proxy.conf.json`:**
+```json
+{
+  "/api": {
+    "target": "http://localhost:8000",
+    "secure": false,
+    "changeOrigin": true
+  }
+}
+```
+
+**Update `angular.json`** to use the proxy configuration:
+Add the proxy config to the serve options:
+```json
+"serve": {
+  "builder": "@angular-devkit/build-angular:dev-server",
+  "options": {
+    "proxyConfig": "proxy.conf.json"
+  },
+  "configurations": {
+    "production": {
+      "buildTarget": "ai-chatbot-frontend:build:production"
+    },
+    "development": {
+      "buildTarget": "ai-chatbot-frontend:build:development"
+    }
+  },
+  "defaultConfiguration": "development"
+}
+```
+
+### 3.3 Start Frontend Development Server
+
+```bash
+# Start Angular development server
+npm start
+# or
+ng serve
+```
+
+The frontend will be available at: `http://localhost:4200`
+
+## Step 4: Verify Full Stack Integration
+
+1. **Open browser** to `http://localhost:4200`
+2. **Test authentication** - Use the bypass login feature or register a new account
+3. **Test chat functionality** - Send a message to verify RAG pipeline
+4. **Test document upload** - Upload a PDF/TXT document to test document processing
+
+## API Key Management for Local Development
+
+### Where to Get API Keys
+
+1. **Supabase Keys:**
+   - Create a free project at [supabase.com](https://supabase.com)
+   - Go to Project Settings > API
+   - Copy: `SUPABASE_URL`, `SUPABASE_KEY` (anon public key)
+   - Go to API Settings > JWT Settings for `SUPABASE_JWT_SECRET`
+   - Go to Database > Connection String for `DATABASE_URL`
+
+2. **OpenAI API Key:**
+   - Sign up at [platform.openai.com](https://platform.openai.com)
+   - Go to API Keys section
+   - Create new secret key
+   - Copy to `OPENAI_API_KEY` in `.env`
+
+3. **Anthropic API Key (optional):**
+   - Sign up at [console.anthropic.com](https://console.anthropic.com)
+   - Create API key
+   - Copy to `ANTHROPIC_API_KEY` in `.env`
+
+4. **Google Gemini API Key (optional):**
+   - Go to [makersuite.google.com](https://makersuite.google.com)
+   - Get API key from Google AI Studio
+   - Copy to `GEMINI_API_KEY` in `.env`
+
+### Security Best Practices for Local Development
+
+- **Never commit `.env` files** to version control
+- Use `.gitignore` to exclude sensitive files
+- For team development, share `.env.example` without actual keys
+- Consider using password managers or secure vaults for sharing keys
+
+## Running Tests
+
+### Backend Tests
+```bash
+cd backend
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=app --cov-report=html
+
+# Run specific test module
+pytest tests/test_auth.py -v
+```
+
+### Frontend Tests
+```bash
+cd frontend
+# Unit tests
+npm test
+
+# Linting
+npm run lint
+
+# Formatting check
+npm run format:check
+```
+
+## Troubleshooting Common Local Issues
+
+### 1. ChromaDB Connection Issues
+```
+Error: Cannot connect to ChromaDB at localhost:8000
+```
+**Solution:**
+- Ensure Docker is running: `docker ps`
+- Start ChromaDB: `docker-compose up -d chromadb`
+- Wait 30 seconds for ChromaDB to initialize
+- Test connection: `curl http://localhost:8000/api/v1/heartbeat`
+
+### 2. Database Connection Errors
+```
+asyncpg.exceptions.PostgresConnectionError: connection failed
+```
+**Solution:**
+- Verify `DATABASE_URL` in `.env` is correct
+- Check Supabase project is active
+- Ensure IP is allowed in Supabase network settings
+
+### 3. CORS Errors in Browser
+```
+Access to fetch at 'http://localhost:8000/api/v1/auth/login' from origin 'http://localhost:4200' has been blocked by CORS policy
+```
+**Solution:**
+- Ensure `BACKEND_CORS_ORIGINS` includes `http://localhost:4200`
+- Restart backend after changing `.env`
+- Check proxy configuration in frontend
+
+### 4. Missing API Keys
+```
+OPENAI_API_KEY is required but not set
+```
+**Solution:**
+- Verify `.env` file exists in `backend/` directory
+- Check variable names match `.env.example`
+- Restart backend after updating `.env`
+
+### 5. Frontend Can't Connect to Backend
+```
+Failed to load resource: the server responded with a status of 404 (Not Found)
+```
+**Solution:**
+- Ensure backend is running on port 8000
+- Verify proxy configuration
+- Check browser developer tools Network tab
+- Try direct API call: `curl http://localhost:8000/api/v1/health`
+
+### 6. Python Dependency Issues
+```
+ModuleNotFoundError: No module named 'fastapi'
+```
+**Solution:**
+- Activate virtual environment: `venv\Scripts\activate` (Windows)
+- Reinstall dependencies: `pip install -e .`
+- Check Python version: `python --version` (should be 3.11+)
+
+## Development Workflow Tips
+
+1. **Start services in order:**
+   ```bash
+   # Terminal 1: ChromaDB
+   docker-compose up -d chromadb
+   
+   # Terminal 2: Backend
+   cd backend
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   
+   # Terminal 3: Frontend
+   cd frontend
+   npm start
+   ```
+
+2. **Monitor logs:**
+   - Backend logs: Check terminal running uvicorn
+   - Frontend logs: Browser developer console
+   - ChromaDB logs: `docker logs ai-chatbot-chromadb`
+
+3. **Use hot reload:**
+   - Backend: Auto-reloads on file changes (--reload flag)
+   - Frontend: Auto-reloads via Angular CLI
+
+4. **Debug tools:**
+   - Backend: Use FastAPI's `/docs` endpoint for API testing
+   - Frontend: Use Angular DevTools browser extension
+   - Database: Use Supabase dashboard for data inspection
+
+---
+
+# Production Deployment Guide
+
 This guide provides step-by-step instructions for deploying the AI Chatbot with RAG application to production.
 
 ## Prerequisites
@@ -226,4 +564,4 @@ For deployment issues, refer to:
 ---
 
 *Last Updated: 2026-03-27*  
-*Deployment Guide Version: 1.0*
+*Deployment Guide Version: 2.0*

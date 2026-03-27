@@ -44,6 +44,7 @@ def create_application() -> FastAPI:
                 "description": "Document metadata management endpoints",
             },
         ],
+        redirect_slashes=False,
     )
 
     # Set up CORS

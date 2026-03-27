@@ -2,6 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, fromEvent, merge, of } from 'rxjs';
 import { map, catchError, switchMap, takeUntil } from 'rxjs/operators';
+import { inject } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { selectToken } from '../state/auth/auth.selectors';
+import { firstValueFrom } from 'rxjs'
 
 export interface ChatMessage {
   id?: string;
@@ -70,14 +74,14 @@ export class ChatService {
   private streamSubject = new Subject<string>();
   private streamCompleteSubject = new Subject<ChatCompletionResponse>();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Get all chat sessions for the current user
    */
   getChats(page: number = 1, pageSize: number = 20): Observable<{ chats: ChatSession[], total: number }> {
     return this.http.get<{ chats: ChatSession[], total: number, page: number, page_size: number }>(
-      `${this.API_BASE}/chats`,
+      `${this.API_BASE}/chats/`,
       { params: { page: page.toString(), page_size: pageSize.toString() } }
     ).pipe(
       map(response => ({
@@ -91,7 +95,7 @@ export class ChatService {
    * Create a new chat session
    */
   createChat(title?: string, modelUsed?: string): Observable<ChatSession> {
-    return this.http.post<ChatSession>(`${this.API_BASE}/chats`, {
+    return this.http.post<ChatSession>(`${this.API_BASE}/chats/`, {
       title,
       model_used: modelUsed
     });
@@ -117,7 +121,7 @@ export class ChatService {
    */
   sendMessage(request: ChatCompletionRequest): Observable<ChatCompletionResponse> {
     return this.http.post<ChatCompletionResponse>(
-      `${this.API_BASE}/chats/completions`,
+      `${this.API_BASE}/chats/completions/`,
       { ...request, stream: false }
     );
   }
@@ -130,7 +134,7 @@ export class ChatService {
     this.closeStream();
 
     const requestWithStream = { ...request, stream: true };
-    
+
     return new Observable(observer => {
       // First, create the chat completion to get the stream endpoint
       this.http.post<{ stream_url: string }>(
@@ -140,7 +144,7 @@ export class ChatService {
         switchMap(response => {
           // Connect to the SSE endpoint
           this.eventSource = new EventSource(response.stream_url);
-          
+
           // Handle incoming tokens
           this.eventSource.addEventListener('token', (event: MessageEvent) => {
             try {
@@ -150,7 +154,7 @@ export class ChatService {
               console.error('Error parsing token event:', error);
             }
           });
-          
+
           // Handle completion
           this.eventSource.addEventListener('complete', (event: MessageEvent) => {
             try {
@@ -162,14 +166,14 @@ export class ChatService {
               console.error('Error parsing complete event:', error);
             }
           });
-          
+
           // Handle errors
           this.eventSource.addEventListener('error', (event: MessageEvent) => {
             console.error('SSE error:', event);
             observer.error(new Error('Stream connection error'));
             this.closeStream();
           });
-          
+
           // Return an observable that completes when the stream ends
           return new Observable(sub => {
             this.eventSource?.addEventListener('close', () => {
@@ -182,7 +186,7 @@ export class ChatService {
           return of(null);
         })
       ).subscribe();
-      
+
       // Cleanup function
       return () => {
         this.closeStream();
@@ -193,30 +197,34 @@ export class ChatService {
   /**
    * Alternative SSE implementation using fetch API for more control
    */
+  private store = inject(Store);
   async *streamMessage(request: ChatCompletionRequest, abortSignal?: AbortSignal): AsyncGenerator<string, void, unknown> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
+    const storeToken = await firstValueFrom(this.store.select(selectToken));
+    const token = storeToken || localStorage.getItem('auth_token');
     // Combine with external abort signal if provided
     if (abortSignal) {
       abortSignal.addEventListener('abort', () => {
         controller.abort();
       });
     }
-    
+
     try {
       const response = await fetch(`${this.API_BASE}/chats/completions/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Authorization': `Bearer ${token}`,  // ← use resolved token
           'Accept': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
         },
         body: JSON.stringify({ ...request, stream: true }),
         signal: controller.signal
       });
+      if (!token) {
+    throw new Error('No auth token available. Please log in again.');
+  }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -231,7 +239,7 @@ export class ChatService {
       let buffer = '';
       let lastYieldTime = Date.now();
       let tokenBuffer: string[] = [];
-      
+
       // Buffer tokens to reduce UI updates (max 50ms between yields)
       const flushBuffer = () => {
         if (tokenBuffer.length > 0) {
@@ -261,30 +269,30 @@ export class ChatService {
                 if (remaining) yield remaining;
                 return;
               }
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.token) {
-                    // Handle batched tokens (backend may send multiple tokens as one string)
-                    const tokens = parsed.token;
-                    tokenBuffer.push(tokens);
-                    
-                    // Yield if buffer is large enough or enough time has passed
-                    const now = Date.now();
-                    if (tokenBuffer.length >= 3 || now - lastYieldTime >= 50) {
-                      const combined = flushBuffer();
-                      if (combined) yield combined;
-                    }
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.token) {
+                  // Handle batched tokens (backend may send multiple tokens as one string)
+                  const tokens = parsed.token;
+                  tokenBuffer.push(tokens);
+
+                  // Yield if buffer is large enough or enough time has passed
+                  const now = Date.now();
+                  if (tokenBuffer.length >= 3 || now - lastYieldTime >= 50) {
+                    const combined = flushBuffer();
+                    if (combined) yield combined;
                   }
-                } catch (e) {
-                  console.error('Error parsing SSE data:', e);
                 }
+              } catch (e) {
+                console.error('Error parsing SSE data:', e);
+              }
             } else if (line.startsWith('ping:')) {
               // Keep-alive ping, ignore
               continue;
             }
           }
         }
-        
+
         // Flush any remaining tokens
         const remaining = flushBuffer();
         if (remaining) yield remaining;

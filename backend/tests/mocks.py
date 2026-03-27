@@ -44,7 +44,7 @@ class MockOpenAI:
         # Mock models list
         mock_models_response = MagicMock()
         mock_models_response.data = [
-            MagicMock(id="gpt-4", object="model"),
+            MagicMock(id="gpt-5-nano", object="model"),
             MagicMock(id="gpt-3.5-turbo", object="model"),
         ]
         self.models.list = AsyncMock(return_value=mock_models_response)

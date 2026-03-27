@@ -333,7 +333,7 @@ export class CommandParserService {
                 })
               )
             ),
-            catchError(() => of('Current model: gpt-4 (OpenAI GPT-4)'))
+            catchError(() => of('Current model: gpt-5-nano (OpenAI GPT 5 Nano)'))
           );
         } else if (args[0] === 'set' && args.length > 1) {
           const modelId = args[1];

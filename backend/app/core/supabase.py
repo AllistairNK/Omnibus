@@ -5,7 +5,6 @@ import logging
 from typing import Optional, Dict, Any
 
 from supabase import create_client, Client
-from supabase.lib.client_options import ClientOptions
 
 from app.core.config import settings
 
@@ -34,16 +33,9 @@ class SupabaseClient:
             return
 
         try:
-            # Create Supabase client with custom options
-            options = ClientOptions(
-                auto_refresh_token=True,
-                persist_session=True,
-                detect_session_in_url=True,
-            )
             self._client = create_client(
                 supabase_url=settings.SUPABASE_URL,
                 supabase_key=settings.SUPABASE_KEY,
-                options=options,
             )
             logger.info(f"Supabase client initialized for {settings.SUPABASE_URL}")
         except Exception as e:

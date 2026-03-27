@@ -223,7 +223,7 @@ export class ModelsService {
    */
   getCurrentModel(): Observable<string> {
     // In a real app, this would come from user preferences or localStorage
-    const savedModel = localStorage.getItem('currentModel') || 'gpt-4';
+    const savedModel = localStorage.getItem('currentModel') || 'gpt-5-nano';
     return of(savedModel);
   }
 
@@ -255,5 +255,5 @@ export class ModelsService {
     return of(this.models.map(m => m.id));
   }
 
-  private currentModel: string = 'gpt-4';
+  private currentModel: string = 'gpt-5-nano';
 }

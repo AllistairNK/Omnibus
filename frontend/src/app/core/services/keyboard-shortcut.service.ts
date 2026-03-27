@@ -55,6 +55,11 @@ export class KeyboardShortcutService implements OnDestroy {
    * Register a new keyboard shortcut
    */
   registerShortcut(shortcut: KeyboardShortcut): void {
+    // Validate shortcut key
+    if (typeof shortcut.key !== 'string') {
+      console.warn('Keyboard shortcut key must be a string', shortcut);
+      return;
+    }
     this.shortcuts.push(shortcut);
   }
 
@@ -75,10 +80,19 @@ export class KeyboardShortcutService implements OnDestroy {
    * Handle keydown events
    */
   private handleKeydown(event: KeyboardEvent): void {
+    // Guard against undefined/null key
+    if (typeof event.key !== 'string') {
+      return;
+    }
+    
     const key = event.key.toLowerCase();
     
     // Find matching shortcuts
     const matchingShortcuts = this.shortcuts.filter(shortcut => {
+      // Guard against invalid shortcut key
+      if (typeof shortcut.key !== 'string') {
+        return false;
+      }
       return shortcut.key.toLowerCase() === key &&
              (shortcut.ctrlKey === undefined || shortcut.ctrlKey === event.ctrlKey) &&
              (shortcut.shiftKey === undefined || shortcut.shiftKey === event.shiftKey) &&

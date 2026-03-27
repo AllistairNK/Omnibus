@@ -48,7 +48,7 @@ export class ChatHistorySidebarComponent implements OnInit {
   }
 
   createNewChat() {
-    this.chatService.createChat('New Chat', 'gpt-4').subscribe({
+    this.chatService.createChat('New Chat', 'gpt-5-nano').subscribe({
       next: (chat) => {
         this.chats.unshift(chat);
         this.selectChat(chat.id);
@@ -62,7 +62,7 @@ export class ChatHistorySidebarComponent implements OnInit {
           title: 'New Chat',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          model_used: 'gpt-4',
+          model_used: 'gpt-5-nano',
           metadata: {},
           message_count: 0
         };
@@ -123,7 +123,7 @@ export class ChatHistorySidebarComponent implements OnInit {
         title: 'RAG System Discussion',
         created_at: new Date(Date.now() - 3600000).toISOString(),
         updated_at: new Date(Date.now() - 1800000).toISOString(),
-        model_used: 'gpt-4',
+        model_used: 'gpt-5-nano',
         metadata: {},
         message_count: 12
       },

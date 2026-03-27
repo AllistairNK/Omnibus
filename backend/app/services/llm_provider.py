@@ -264,6 +264,7 @@ class OpenAIProvider(LLMProvider):
             "gpt-3.5-turbo-16k",
             "gpt-4o",
             "gpt-4o-mini",
+            "gpt-5-nano"
         ]
 
 

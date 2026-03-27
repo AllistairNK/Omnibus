@@ -32,14 +32,14 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample chats
 INSERT INTO chats (id, user_id, title, model_used) VALUES
-    ('cccccccc-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Sample Chat about AI', 'gpt-4'),
+    ('cccccccc-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Sample Chat about AI', 'gpt-5-nano'),
     ('cccccccc-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'Document Analysis', 'claude-3')
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample messages
 INSERT INTO messages (id, chat_id, role, content, timestamp) VALUES
-    ('mmmmmmmm-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000001', 'user', 'Hello, can you explain RAG?', NOW() - INTERVAL '1 hour'),
-    ('mmmmmmmm-0000-0000-0000-000000000002', 'cccccccc-0000-0000-0000-000000000001', 'assistant', 'RAG stands for Retrieval-Augmented Generation...', NOW() - INTERVAL '55 minutes'),
-    ('mmmmmmmm-0000-0000-0000-000000000003', 'cccccccc-0000-0000-0000-000000000001', 'user', 'How does it work with documents?', NOW() - INTERVAL '50 minutes'),
-    ('mmmmmmmm-0000-0000-0000-000000000004', 'cccccccc-0000-0000-0000-000000000001', 'assistant', 'RAG works by retrieving relevant document chunks...', NOW() - INTERVAL '45 minutes')
+    ('00000000-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000001', 'user', 'Hello, can you explain RAG?', NOW() - INTERVAL '1 hour'),
+    ('00000000-0000-0000-0000-000000000002', 'cccccccc-0000-0000-0000-000000000001', 'assistant', 'RAG stands for Retrieval-Augmented Generation...', NOW() - INTERVAL '55 minutes'),
+    ('00000000-0000-0000-0000-000000000003', 'cccccccc-0000-0000-0000-000000000001', 'user', 'How does it work with documents?', NOW() - INTERVAL '50 minutes'),
+    ('00000000-0000-0000-0000-000000000004', 'cccccccc-0000-0000-0000-000000000001', 'assistant', 'RAG works by retrieving relevant document chunks...', NOW() - INTERVAL '45 minutes')
 ON CONFLICT (id) DO NOTHING;

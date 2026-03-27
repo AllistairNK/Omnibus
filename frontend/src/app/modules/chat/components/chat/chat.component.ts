@@ -125,27 +125,28 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     private asciiEmotionService: AsciiEmotionService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    
     // Initialize with some command history
     this.messageHistory = ['/help', 'Tell me about RAG', 'What is vector search?'];
-    
-    // Create a new chat session or load existing one
-    this.createOrLoadChat();
-    
+
     // Load saved RAG settings
     this.loadRagSettings();
-    
-    // Load initial messages
-    this.loadMoreMessages();
-    
+
     // Setup debounced input handler
     this.setupDebouncedInput();
-    
+
     // Setup emotion subscriptions
     this.setupEmotionSubscriptions();
-    
+
     // Initialize thinking frames
     this.thinkingFrames = this.asciiEmotionService.getThinkingIndicators();
+
+    // Create a new chat session or load existing one
+    this.createOrLoadChat();
+
+    // Load initial messages
+    this.loadMoreMessages();
   }
 
   ngAfterViewChecked() {
@@ -453,7 +454,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       const request: ChatCompletionRequest = {
         message: messageContent,
         chat_id: this.currentChatId || undefined,
-        model: 'gpt-4',
+        model: 'gpt-5-nano',
         stream: true,
         use_rag: true,
         include_sources: true
@@ -610,7 +611,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   private async createOrLoadChat() {
     try {
-      const response = await firstValueFrom(this.chatService.createChat('New Chat', 'gpt-4'));
+      const response = await firstValueFrom(this.chatService.createChat('New Chat', 'gpt-5-nano'));
       this.currentChatId = response.id;
     } catch (error) {
       console.error('Error creating chat session:', error);

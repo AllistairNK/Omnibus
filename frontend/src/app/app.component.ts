@@ -3,9 +3,11 @@ import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { Subscription, Observable } from 'rxjs';
+import { Store } from '@ngrx/store';
 import { RouterModule } from '@angular/router';
 import { NetworkStatusIndicatorComponent } from './core/components/network-status-indicator/network-status-indicator.component';
 import { FeatureDegradationWarningComponent } from './core/components/feature-degradation-warning/feature-degradation-warning.component';
@@ -14,6 +16,8 @@ import { ThemeToggleComponent } from './core/components/theme-toggle/theme-toggl
 import { KeyboardShortcutHelpComponent } from './core/components/keyboard-shortcut-help/keyboard-shortcut-help.component';
 import { KeyboardShortcutService } from './core/services/keyboard-shortcut.service';
 import { ThemeService } from './core/services/theme.service';
+import { AuthService } from './core/services/auth.service';
+import { selectIsAuthenticated, selectUser } from './core/state/auth/auth.selectors';
 
 @Component({
   selector: 'app-root',
@@ -26,6 +30,8 @@ export class AppComponent implements OnInit, OnDestroy {
   title = 'AI Chatbot with RAG';
   currentRoute = '';
   currentTime = new Date();
+  isAuthenticated$: Observable<boolean>;
+  user$: Observable<any>;
   private subscriptions: Subscription[] = [];
   private isBrowser: boolean;
 
@@ -34,9 +40,14 @@ export class AppComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private keyboardShortcutService: KeyboardShortcutService,
     private themeService: ThemeService,
+    private authService: AuthService,
+    private store: Store,
+    private snackBar: MatSnackBar,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
+    this.isAuthenticated$ = this.store.select(selectIsAuthenticated);
+    this.user$ = this.store.select(selectUser);
   }
 
   ngOnInit() {
@@ -110,5 +121,22 @@ export class AppComponent implements OnInit, OnDestroy {
     // Dispatch event to chat component
     const event = new CustomEvent('focus-chat-input-with-slash');
     document.dispatchEvent(event);
+  }
+
+  /**
+   * Logout user
+   */
+  logout(): void {
+    this.authService.logout().subscribe({
+      next: () => {
+        this.snackBar.open('Logged out successfully', 'Close', { duration: 3000 });
+        this.router.navigate(['/auth/login']);
+      },
+      error: (error) => {
+        console.error('Logout failed:', error);
+        this.snackBar.open('Logged out locally', 'Close', { duration: 3000 });
+        this.router.navigate(['/auth/login']);
+      }
+    });
   }
 }

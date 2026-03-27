@@ -2,6 +2,7 @@
 Authentication and authorization utilities for Supabase JWT.
 """
 import logging
+from datetime import datetime
 from typing import Optional, Dict, Any
 
 from fastapi import Depends, HTTPException, status
@@ -95,6 +96,9 @@ async def get_current_user(
     Returns:
         Dict containing user information.
     """
+    # Ensure user exists in our users table
+    await ensure_user_exists(token_data.sub, token_data.email)
+    
     # For now, return token data as user.
     # In the future, we could fetch additional user details from Supabase.
     return {
@@ -128,3 +132,41 @@ async def require_admin(
             detail="Insufficient permissions",
         )
     return current_user
+
+
+async def ensure_user_exists(user_id: str, email: str) -> None:
+    """
+    Ensure a user exists in the application's users table.
+    
+    This function checks if a user with the given ID exists in the users table,
+    and creates a record if it doesn't exist.
+    
+    Args:
+        user_id: The user's ID from Supabase Auth
+        email: The user's email address
+    """
+    try:
+        supabase = SupabaseClient()
+        if not supabase._client:
+            logger.warning("Supabase client not initialized, cannot ensure user exists")
+            return
+        
+        # Check if user exists in our users table
+        existing = supabase._client.table("users").select("id").eq("id", user_id).execute()
+        
+        if not existing.data:
+            # Create user record
+            create_data = {
+                "id": user_id,
+                "email": email,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            supabase._client.table("users").insert(create_data).execute()
+            logger.info(f"Created user record for {email} ({user_id})")
+        else:
+            logger.debug(f"User {user_id} already exists in users table")
+            
+    except Exception as e:
+        logger.error(f"Error ensuring user exists: {e}")
+        # Don't raise exception - this is a helper function that shouldn't break the main flow

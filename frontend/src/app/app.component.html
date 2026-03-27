@@ -32,16 +32,20 @@ MMMMMMMMMM
         <a mat-button routerLink="/settings" routerLinkActive="active" aria-label="Settings">
           Settings
         </a>
-        <a mat-button routerLink="/auth/login" routerLinkActive="active" aria-label="Login">
+        <a *ngIf="!(isAuthenticated$ | async)" mat-button routerLink="/auth/login" routerLinkActive="active" aria-label="Login">
           Login
         </a>
       </nav>
       <div class="header-controls">
         <app-theme-toggle />
-        <div class="user-info" *ngIf="false" aria-label="User Information">
+        <div class="user-info" *ngIf="isAuthenticated$ | async" aria-label="User Information">
           <mat-icon aria-hidden="true">person</mat-icon>
-          <span>user&#64;example.com</span>
+          <span>{{ (user$ | async)?.email || 'User' }}</span>
         </div>
+        <button *ngIf="isAuthenticated$ | async" mat-button (click)="logout()" aria-label="Logout">
+          <mat-icon aria-hidden="true">logout</mat-icon>
+          <span class="logout-text">Logout</span>
+        </button>
       </div>
     </div>
   </header>
