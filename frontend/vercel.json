@@ -1,0 +1,19 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/frontend/browser",
+  "devCommand": "ng serve",
+  "installCommand": "npm install",
+  "framework": "angular",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "NG_APP_API_URL": "https://your-backend-domain.com",
+    "NG_APP_ENVIRONMENT": "production",
+    "NG_APP_SUPABASE_URL": "https://your-project-ref.supabase.co",
+    "NG_APP_SUPABASE_ANON_KEY": "your-supabase-anon-key"
+  }
+}

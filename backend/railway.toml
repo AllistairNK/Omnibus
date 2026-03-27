@@ -1,0 +1,31 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install --no-cache-dir ."
+
+[deploy]
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/api/v1/health"
+healthcheckTimeout = 60
+
+[variables]
+ENVIRONMENT = "production"
+DEBUG = "false"
+
+# Required variables (must be set in Railway dashboard)
+DATABASE_URL = ""
+SUPABASE_URL = ""
+SUPABASE_KEY = ""
+SUPABASE_JWT_SECRET = ""
+OPENAI_API_KEY = ""
+ANTHROPIC_API_KEY = ""
+GEMINI_API_KEY = ""
+SECRET_KEY = ""
+BACKEND_CORS_ORIGINS = "https://your-frontend-domain.com"
+CHROMA_HOST = "your-chromadb-host"
+CHROMA_PORT = "8000"
+
+[health]
+path = "/api/v1/health"
+initialDelay = 30
+timeout = 10
+period = 30
