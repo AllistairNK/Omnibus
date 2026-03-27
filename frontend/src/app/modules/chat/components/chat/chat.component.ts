@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { ChatService, ChatMessage, ChatCompletionRequest } from '../../../../core/services/chat.service';
 import { CommandParserService, CommandResult } from '../../../../core/services/command-parser.service';
+import { AsciiEmotionService, EmotionType } from '../../../../core/services/ascii-emotion.service';
 import { Subscription, Subject, timer } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
@@ -44,38 +45,18 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   private currentStreamAbortController?: AbortController;
   protected isStreaming = false;
   
-  // ASCII loading animations
+  // ASCII loading animations (kept for backward compatibility)
   private asciiLoadingFrames = [
-    `
-    ⠋ Loading
-    `,
-    `
-    ⠙ Loading
-    `,
-    `
-    ⠹ Loading
-    `,
-    `
-    ⠸ Loading
-    `,
-    `
-    ⠼ Loading
-    `,
-    `
-    ⠴ Loading
-    `,
-    `
-    ⠦ Loading
-    `,
-    `
-    ⠧ Loading
-    `,
-    `
-    ⠇ Loading
-    `,
-    `
-    ⠏ Loading
-    `
+    '⠋ Loading',
+    '⠙ Loading',
+    '⠹ Loading',
+    '⠸ Loading',
+    '⠼ Loading',
+    '⠴ Loading',
+    '⠦ Loading',
+    '⠧ Loading',
+    '⠇ Loading',
+    '⠏ Loading'
   ];
   
   private asciiThinkingFrames = [
@@ -97,6 +78,22 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   ];
   
   private currentLoadingInterval: any = null;
+  
+  // Emotion properties
+  currentEmotion: EmotionType = 'neutral';
+  emotionTransitionProgress = 0;
+  isEmotionTransitioning = false;
+  currentAsciiFrame = '';
+  private emotionSubscription?: Subscription;
+  
+  // Animated thinking indicators
+  currentThinkingFrame = 0;
+  thinkingFrames: string[] = [];
+  private thinkingInterval: any = null;
+  
+  // Particle effects
+  particles: Array<{id: number, content: string, x: number, y: number, type: 'send' | 'receive'}> = [];
+  private particleId = 0;
   
   // Command suggestions
   commandSuggestions: string[] = [];
@@ -124,7 +121,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   constructor(
     private chatService: ChatService,
-    private commandParser: CommandParserService
+    private commandParser: CommandParserService,
+    private asciiEmotionService: AsciiEmotionService
   ) {}
 
   ngOnInit() {
@@ -142,10 +140,164 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     
     // Setup debounced input handler
     this.setupDebouncedInput();
+    
+    // Setup emotion subscriptions
+    this.setupEmotionSubscriptions();
+    
+    // Initialize thinking frames
+    this.thinkingFrames = this.asciiEmotionService.getThinkingIndicators();
   }
 
   ngAfterViewChecked() {
     this.scrollToBottom();
+  }
+
+  /**
+   * Setup emotion subscriptions
+   */
+  private setupEmotionSubscriptions(): void {
+    // Subscribe to emotion state changes
+    this.emotionSubscription = this.asciiEmotionService.getEmotionState().subscribe(state => {
+      this.currentEmotion = state.currentEmotion;
+      this.emotionTransitionProgress = state.transitionProgress;
+      this.isEmotionTransitioning = state.isTransitioning;
+    });
+
+    // Subscribe to current ASCII frame
+    this.asciiEmotionService.getCurrentFrame().subscribe(frame => {
+      this.currentAsciiFrame = frame;
+    });
+
+    // Set initial emotion
+    this.asciiEmotionService.setEmotion('neutral');
+  }
+
+  /**
+   * Change emotion based on chat context
+   */
+  changeEmotionBasedOnContext(context: string): void {
+    const contextLower = context.toLowerCase();
+    
+    if (contextLower.includes('thinking') || contextLower.includes('processing')) {
+      this.asciiEmotionService.setEmotion('thinking');
+    } else if (contextLower.includes('happy') || contextLower.includes('great') || contextLower.includes('thanks')) {
+      this.asciiEmotionService.setEmotion('happy');
+    } else if (contextLower.includes('confused') || contextLower.includes('not sure') || contextLower.includes('don\'t know')) {
+      this.asciiEmotionService.setEmotion('confused');
+    } else if (contextLower.includes('error') || contextLower.includes('failed') || contextLower.includes('wrong')) {
+      this.asciiEmotionService.setEmotion('error');
+    } else if (contextLower.includes('success') || contextLower.includes('done') || contextLower.includes('complete')) {
+      this.asciiEmotionService.setEmotion('success');
+    } else if (contextLower.includes('loading') || contextLower.includes('waiting')) {
+      this.asciiEmotionService.setEmotion('loading');
+    } else {
+      this.asciiEmotionService.setEmotion('neutral');
+    }
+  }
+
+  /**
+   * Set emotion directly
+   */
+  setEmotion(emotion: EmotionType, transitionDuration: number = 500): void {
+    this.asciiEmotionService.setEmotion(emotion, transitionDuration);
+  }
+
+  /**
+   * Start thinking animation
+   */
+  startThinkingAnimation(): void {
+    this.stopThinkingAnimation();
+    this.currentThinkingFrame = 0;
+    
+    this.thinkingInterval = setInterval(() => {
+      this.currentThinkingFrame = (this.currentThinkingFrame + 1) % this.thinkingFrames.length;
+    }, 100);
+  }
+
+  /**
+   * Stop thinking animation
+   */
+  stopThinkingAnimation(): void {
+    if (this.thinkingInterval) {
+      clearInterval(this.thinkingInterval);
+      this.thinkingInterval = null;
+    }
+  }
+
+  /**
+   * Get current thinking frame
+   */
+  getCurrentThinkingFrame(): string {
+    if (this.thinkingFrames.length === 0) {
+      return '⠋ Thinking...';
+    }
+    return this.thinkingFrames[this.currentThinkingFrame];
+  }
+
+  /**
+   * Create particle effect for message send
+   */
+  createSendParticle(): void {
+    const sendParticles = this.asciiEmotionService.getSendParticles();
+    const particleContent = sendParticles[Math.floor(Math.random() * sendParticles.length)];
+    
+    this.particleId++;
+    const particle = {
+      id: this.particleId,
+      content: particleContent,
+      x: Math.random() * 80 + 10, // Random x position (10-90%)
+      y: 90, // Start at bottom
+      type: 'send' as const
+    };
+    
+    this.particles.push(particle);
+    
+    // Remove particle after animation
+    setTimeout(() => {
+      this.particles = this.particles.filter(p => p.id !== particle.id);
+    }, 2000);
+  }
+
+  /**
+   * Create particle effect for message receive
+   */
+  createReceiveParticle(): void {
+    const receiveParticles = this.asciiEmotionService.getReceiveParticles();
+    const particleContent = receiveParticles[Math.floor(Math.random() * receiveParticles.length)];
+    
+    this.particleId++;
+    const particle = {
+      id: this.particleId,
+      content: particleContent,
+      x: Math.random() * 80 + 10, // Random x position (10-90%)
+      y: 10, // Start at top
+      type: 'receive' as const
+    };
+    
+    this.particles.push(particle);
+    
+    // Remove particle after animation
+    setTimeout(() => {
+      this.particles = this.particles.filter(p => p.id !== particle.id);
+    }, 2000);
+  }
+
+  /**
+   * Create multiple particles for message send
+   */
+  createSendParticles(count: number = 3): void {
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => this.createSendParticle(), i * 100);
+    }
+  }
+
+  /**
+   * Create multiple particles for message receive
+   */
+  createReceiveParticles(count: number = 3): void {
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => this.createReceiveParticle(), i * 100);
+    }
   }
 
   ngOnDestroy() {
@@ -153,6 +305,15 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     if (this.streamSubscription) {
       this.streamSubscription.unsubscribe();
     }
+    
+    // Clean up emotion subscription
+    if (this.emotionSubscription) {
+      this.emotionSubscription.unsubscribe();
+    }
+    
+    // Clean up thinking animation
+    this.stopThinkingAnimation();
+    
     this.chatService.closeStream();
     // Abort any ongoing stream
     if (this.currentStreamAbortController) {
@@ -237,6 +398,13 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.isTyping = true;
       this.streamingResponse = '';
       
+      // Start thinking animation
+      this.startThinkingAnimation();
+      this.setEmotion('thinking');
+      
+      // Create send particles
+      this.createSendParticles(2);
+      
       // Handle commands locally using command parser
       if (messageContent.startsWith('/')) {
         this.isTyping = true;
@@ -248,6 +416,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         }).subscribe({
           next: (result: CommandResult) => {
             this.isTyping = false;
+            this.stopThinkingAnimation();
+            this.setEmotion('success');
+            
+            // Create receive particles
+            this.createReceiveParticles(2);
             
             // Handle special commands that modify UI state
             if (messageContent.toLowerCase() === '/clear' || messageContent.toLowerCase() === '/cls') {
@@ -264,6 +437,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
           },
           error: (error) => {
             this.isTyping = false;
+            this.stopThinkingAnimation();
+            this.setEmotion('error');
             this.messages.push({
               role: 'assistant',
               content: `Error executing command: ${error.message}`,

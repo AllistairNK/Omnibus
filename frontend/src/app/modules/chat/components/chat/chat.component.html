@@ -15,6 +15,24 @@
     </div>
   </div>
 
+  <!-- ASCII Emotion Display -->
+  <div class="ascii-emotion-container" [class.transitioning]="isEmotionTransitioning">
+    <div class="emotion-header">
+      <span class="prompt-symbol">$</span> AI Assistant Emotion: 
+      <span class="emotion-label" [ngClass]="'emotion-' + currentEmotion">{{ currentEmotion | titlecase }}</span>
+      <span *ngIf="isEmotionTransitioning" class="transition-indicator">
+        (Transitioning: {{ emotionTransitionProgress * 100 | number:'1.0-0' }}%)
+      </span>
+    </div>
+    <pre class="ascii-emotion">{{ currentAsciiFrame }}</pre>
+    <div class="emotion-controls">
+      <button class="emotion-btn" (click)="setEmotion('happy')" [class.active]="currentEmotion === 'happy'">😊 Happy</button>
+      <button class="emotion-btn" (click)="setEmotion('thinking')" [class.active]="currentEmotion === 'thinking'">🤔 Thinking</button>
+      <button class="emotion-btn" (click)="setEmotion('confused')" [class.active]="currentEmotion === 'confused'">😕 Confused</button>
+      <button class="emotion-btn" (click)="setEmotion('neutral')" [class.active]="currentEmotion === 'neutral'">😐 Neutral</button>
+    </div>
+  </div>
+
   <!-- Terminal Body -->
   <div class="terminal-body">
     <!-- Terminal Output Area -->
@@ -85,7 +103,7 @@
       <div *ngIf="streamingResponse" class="terminal-line">
         <span class="prompt bot-prompt">ai&#64;assistant:~$</span>
         <span class="message-content streaming">{{ streamingResponse }}</span>
-        <span class="cursor">█</span>
+        <span class="blinking-cursor"></span>
       </div>
       
       <!-- Cursor for typing indicator -->
@@ -96,6 +114,13 @@
           <span class="typing-dot"></span>
           <span class="typing-dot"></span>
         </span>
+        <!-- ASCII thinking spinner -->
+        <span class="thinking-indicator">
+          <span class="thinking-dot"></span>
+          <span class="thinking-dot"></span>
+          <span class="thinking-dot"></span>
+        </span>
+        <span class="ascii-thinking">{{ getCurrentThinkingFrame() }}</span>
       </div>
     </div>
 
@@ -112,6 +137,7 @@
           placeholder="Type your message or command..."
           autofocus
         />
+        <span *ngIf="!newMessage" class="input-cursor blinking-cursor"></span>
         <button class="send-button" (click)="sendMessage()" title="Send (Enter)" [disabled]="isStreaming">
           <span class="send-icon">⏎</span>
         </button>
@@ -195,6 +221,18 @@
         <button class="settings-button save" (click)="saveRagSettings()">Save Settings</button>
         <button class="settings-button reset" (click)="resetRagSettings()">Reset to Defaults</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Particle Effects Container -->
+  <div class="particle-container">
+    <div *ngFor="let particle of particles" 
+         class="particle"
+         [style.left.%]="particle.x"
+         [style.top.%]="particle.y"
+         [class.send-particle]="particle.type === 'send'"
+         [class.receive-particle]="particle.type === 'receive'">
+      {{ particle.content }}
     </div>
   </div>
 </div>
