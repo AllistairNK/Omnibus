@@ -301,3 +301,71 @@ async def get_user_by_id(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch user",
         )
+
+
+@router.get("/", response_model=UserListResponse)
+async def list_users(
+    page: int = 1,
+    page_size: int = 20,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """
+    List all users (admin only).
+    
+    Requires admin privileges to view all users.
+    """
+    # Check if current user is admin
+    if not current_user.get("role") == "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+    
+    try:
+        supabase = SupabaseClient()
+        if not supabase._client:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Supabase client not initialized",
+            )
+        
+        # Calculate pagination
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size - 1
+        
+        # Get users from database with pagination
+        db_users = supabase._client.table("users").select("*").range(start_idx, end_idx).execute()
+        
+        # Get total count
+        count_result = supabase._client.table("users").select("*", count="exact").execute()
+        total = count_result.count if hasattr(count_result, 'count') else len(db_users.data)
+        
+        # Format response
+        users_list = []
+        for user_data in db_users.data:
+            users_list.append({
+                "id": user_data["id"],
+                "email": user_data.get("email", ""),
+                "display_name": user_data.get("display_name"),
+                "avatar_url": user_data.get("avatar_url"),
+                "created_at": user_data.get("created_at", ""),
+                "updated_at": user_data.get("updated_at", ""),
+                "metadata": user_data.get("metadata", {}),
+                "app_metadata": None,
+                "user_metadata": None,
+            })
+        
+        return {
+            "users": users_list,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error listing users: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list users",
+        )

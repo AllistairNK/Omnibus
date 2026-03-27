@@ -1,0 +1,40 @@
+<div class="admin-dashboard">
+  <div class="dashboard-header">
+    <h1 class="terminal-text">
+      <span class="ascii-art">╔══════════════════════════════════════╗</span><br>
+      <span class="ascii-art">║       SYSTEM ADMINISTRATION         ║</span><br>
+      <span class="ascii-art">╚══════════════════════════════════════╝</span>
+    </h1>
+    <p class="subtitle terminal-text">Administrative Control Panel v1.0</p>
+  </div>
+
+  <nav mat-tab-nav-bar class="admin-nav" backgroundColor="primary">
+    <a mat-tab-link
+       *ngFor="let link of navLinks"
+       [routerLink]="link.path"
+       routerLinkActive #rla="routerLinkActive"
+       [active]="rla.isActive">
+      <mat-icon>{{link.icon}}</mat-icon>
+      {{link.label}}
+    </a>
+  </nav>
+
+  <div class="dashboard-content">
+    <router-outlet></router-outlet>
+  </div>
+
+  <div class="dashboard-footer terminal-text">
+    <div class="footer-info">
+      <span class="status-indicator">
+        <span class="status-dot active"></span>
+        ADMIN MODE ACTIVE
+      </span>
+      <span class="timestamp">
+        Last updated: {{currentTime | date:'yyyy-MM-dd HH:mm:ss'}}
+      </span>
+    </div>
+    <div class="footer-warning">
+      ⚠️ WARNING: Administrative actions are logged and audited.
+    </div>
+  </div>
+</div>
