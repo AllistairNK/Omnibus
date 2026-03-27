@@ -30,9 +30,9 @@ class LLMService:
         
     async def initialize(self) -> None:
         """Initialize all available providers."""
-        try:
-            # Initialize OpenAI provider if API key is set
-            if settings.OPENAI_API_KEY:
+        # Initialize OpenAI provider if API key is set
+        if settings.OPENAI_API_KEY:
+            try:
                 openai_provider = OpenAIProvider(
                     api_key=settings.OPENAI_API_KEY,
                     default_model=settings.OPENAI_MODEL,
@@ -40,9 +40,12 @@ class LLMService:
                 await openai_provider.initialize()
                 self.providers[LLMProviderType.OPENAI] = openai_provider
                 logger.info("OpenAI provider initialized")
-            
-            # Initialize Anthropic provider if API key is set
-            if hasattr(settings, 'ANTHROPIC_API_KEY') and settings.ANTHROPIC_API_KEY:
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI provider: {e}")
+        
+        # Initialize Anthropic provider if API key is set
+        if hasattr(settings, 'ANTHROPIC_API_KEY') and settings.ANTHROPIC_API_KEY:
+            try:
                 anthropic_provider = AnthropicProvider(
                     api_key=settings.ANTHROPIC_API_KEY,
                     default_model=getattr(settings, 'ANTHROPIC_MODEL', 'claude-3-haiku-20240307'),
@@ -50,9 +53,12 @@ class LLMService:
                 await anthropic_provider.initialize()
                 self.providers[LLMProviderType.ANTHROPIC] = anthropic_provider
                 logger.info("Anthropic provider initialized")
-            
-            # Initialize Gemini provider if API key is set
-            if hasattr(settings, 'GEMINI_API_KEY') and settings.GEMINI_API_KEY:
+            except Exception as e:
+                logger.error(f"Failed to initialize Anthropic provider: {e}")
+        
+        # Initialize Gemini provider if API key is set
+        if hasattr(settings, 'GEMINI_API_KEY') and settings.GEMINI_API_KEY:
+            try:
                 gemini_provider = GeminiProvider(
                     api_key=settings.GEMINI_API_KEY,
                     default_model=getattr(settings, 'GEMINI_MODEL', 'gemini-pro'),
@@ -60,33 +66,31 @@ class LLMService:
                 await gemini_provider.initialize()
                 self.providers[LLMProviderType.GEMINI] = gemini_provider
                 logger.info("Gemini provider initialized")
-            
-            # Set default provider based on configuration and availability
-            if self.providers:
-                # Try to use configured default provider
-                configured_default = getattr(settings, 'DEFAULT_LLM_PROVIDER', 'openai').lower()
-                try:
-                    configured_type = LLMProviderType(configured_default)
-                    if configured_type in self.providers:
-                        self.default_provider_type = configured_type
-                        logger.info(f"Using configured default provider: {configured_type}")
-                    else:
-                        # Fallback to first available provider
-                        self.default_provider_type = list(self.providers.keys())[0]
-                        logger.warning(f"Configured provider {configured_type} not available, using {self.default_provider_type}")
-                except ValueError:
-                    # Invalid provider type in config
+            except Exception as e:
+                logger.error(f"Failed to initialize Gemini provider: {e}")
+        
+        # Set default provider based on configuration and availability
+        if self.providers:
+            # Try to use configured default provider
+            configured_default = getattr(settings, 'DEFAULT_LLM_PROVIDER', 'openai').lower()
+            try:
+                configured_type = LLMProviderType(configured_default)
+                if configured_type in self.providers:
+                    self.default_provider_type = configured_type
+                    logger.info(f"Using configured default provider: {configured_type}")
+                else:
+                    # Fallback to first available provider
                     self.default_provider_type = list(self.providers.keys())[0]
-                    logger.warning(f"Invalid DEFAULT_LLM_PROVIDER '{configured_default}', using {self.default_provider_type}")
-                
-                self._initialized = True
-                logger.info(f"LLM service initialized with {len(self.providers)} provider(s), default: {self.default_provider_type}")
-            else:
-                logger.warning("No LLM providers available. LLM service disabled.")
-                
-        except Exception as e:
-            logger.error(f"Failed to initialize LLM service: {e}")
-            raise
+                    logger.warning(f"Configured provider {configured_type} not available, using {self.default_provider_type}")
+            except ValueError:
+                # Invalid provider type in config
+                self.default_provider_type = list(self.providers.keys())[0]
+                logger.warning(f"Invalid DEFAULT_LLM_PROVIDER '{configured_default}', using {self.default_provider_type}")
+            
+            self._initialized = True
+            logger.info(f"LLM service initialized with {len(self.providers)} provider(s), default: {self.default_provider_type}")
+        else:
+            logger.warning("No LLM providers available. LLM service disabled.")
     
     async def is_available(self) -> bool:
         """Check if any LLM provider is available."""

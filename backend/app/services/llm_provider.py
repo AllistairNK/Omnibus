@@ -140,6 +140,67 @@ class OpenAIProvider(LLMProvider):
         """Check if OpenAI provider is available."""
         return self._initialized and self._client is not None
     
+    async def _create_openai_chat_completion(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.7,
+        max_tokens: int = 1000,
+        stream: bool = False,
+        **kwargs: Any,
+    ):
+        """
+        Create OpenAI chat completion with fallback for max_tokens vs max_completion_tokens.
+        
+        Some newer OpenAI models (e.g., gpt-5-nano) require max_completion_tokens instead of max_tokens.
+        This method attempts with max_tokens first, and if that fails with the specific unsupported
+        parameter error, retries with max_completion_tokens.
+        """
+        from openai import BadRequestError
+        # Models that only support default temperature (1)
+        FIXED_TEMPERATURE_MODELS = {
+            "o1", "o1-mini", "o3", "o3-mini", "o4-mini",
+            "gpt-5-nano", "gpt-5-mini",
+            "gpt-5.4-nano", "gpt-5.4-mini",
+        }
+
+        base_params = {
+            "model": model,
+            "messages": messages,
+            "stream": stream,
+            **kwargs,
+        }
+
+        # Omit temperature entirely for models that don't support it
+        if model not in FIXED_TEMPERATURE_MODELS:
+            base_params["temperature"] = temperature
+
+        try:
+            return await self._client.chat.completions.create(
+                **base_params,
+                max_tokens=max_tokens,
+            )
+        except BadRequestError as e:
+            if (
+                hasattr(e, "code") and e.code == "unsupported_parameter"
+                and hasattr(e, "param") and e.param == "max_tokens"
+            ):
+                return await self._client.chat.completions.create(
+                    **base_params,
+                    max_completion_tokens=max_tokens,
+                )
+            # Also catch temperature errors at runtime for unknown new models
+            elif (
+                hasattr(e, "param") and e.param == "temperature"
+            ):
+                base_params.pop("temperature", None)
+                return await self._client.chat.completions.create(
+                    **base_params,
+                    max_tokens=max_tokens,
+                )
+            else:
+                raise
+    
     async def chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -158,26 +219,18 @@ class OpenAIProvider(LLMProvider):
             
             model_to_use = model or self.default_model
             
+            response = await self._create_openai_chat_completion(
+                model=model_to_use,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=stream,
+                **kwargs,
+            )
+            
             if stream:
-                response = await self._client.chat.completions.create(
-                    model=model_to_use,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    stream=True,
-                    **kwargs,
-                )
                 return {"stream": response}
             else:
-                response = await self._client.chat.completions.create(
-                    model=model_to_use,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    stream=False,
-                    **kwargs,
-                )
-                
                 completion = response.choices[0].message
                 usage = response.usage
                 
@@ -213,7 +266,7 @@ class OpenAIProvider(LLMProvider):
             
             model_to_use = model or self.default_model
             
-            response = await self._client.chat.completions.create(
+            response = await self._create_openai_chat_completion(
                 model=model_to_use,
                 messages=messages,
                 temperature=temperature,

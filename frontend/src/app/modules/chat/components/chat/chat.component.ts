@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ChatService, ChatMessage, ChatCompletionRequest } from '../../../../core/services/chat.service';
 import { CommandParserService, CommandResult } from '../../../../core/services/command-parser.service';
 import { AsciiEmotionService, EmotionType } from '../../../../core/services/ascii-emotion.service';
@@ -122,7 +122,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   constructor(
     private chatService: ChatService,
     private commandParser: CommandParserService,
-    private asciiEmotionService: AsciiEmotionService
+    private asciiEmotionService: AsciiEmotionService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -479,8 +480,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         });
         const streamingMessageIndex = this.messages.length - 1;
         
-        // Start loading animation
-        this.startLoadingAnimation();
+        // Start loading animation (disabled to avoid interfering with streaming)
+        // this.startLoadingAnimation();
         
         try {
           for await (const token of stream) {
@@ -496,6 +497,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
               ...this.messages[streamingMessageIndex],
               content: displayedResponse
             };
+            // Also update streamingResponse for the separate streaming line
+            this.streamingResponse = displayedResponse;
+            
+            // Force change detection to update the UI
+            this.cdr.detectChanges();
             
             // Add a small delay for typing effect (faster for short tokens, slower for longer ones)
             const delay = Math.min(
@@ -512,6 +518,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
               content: displayedResponse + ' [Interrupted]',
               metadata: { streaming: false, interrupted: true }
             };
+            this.streamingResponse = '';
+            this.cdr.detectChanges();
             this.isTyping = false;
             this.isStreaming = false;
             this.currentStreamAbortController = undefined;
@@ -534,6 +542,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
           timestamp: new Date().toISOString(),
           metadata: { streaming: false }
         };
+        this.cdr.detectChanges();
         
       } catch (error) {
         console.error('Error in chat completion:', error);

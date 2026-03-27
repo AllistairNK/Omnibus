@@ -271,10 +271,18 @@ export class ChatService {
               }
               try {
                 const parsed = JSON.parse(data);
-                if (parsed.token) {
+                // Handle both nested token structure (type: "token") and flat token structure
+                let token = null;
+                if (parsed.type === 'token' && parsed.data?.token) {
+                  token = parsed.data.token;
+                } else if (parsed.token) {
+                  token = parsed.token;
+                }
+                if (token) {
+                  // Debug logging
+                  console.debug('Received token:', token);
                   // Handle batched tokens (backend may send multiple tokens as one string)
-                  const tokens = parsed.token;
-                  tokenBuffer.push(tokens);
+                  tokenBuffer.push(token);
 
                   // Yield if buffer is large enough or enough time has passed
                   const now = Date.now();
@@ -283,10 +291,26 @@ export class ChatService {
                     if (combined) yield combined;
                   }
                 }
+                // Handle completion event
+                if (parsed.type === 'complete') {
+                  // Flush any remaining tokens
+                  const remaining = flushBuffer();
+                  if (remaining) yield remaining;
+                  return;
+                }
+                // Handle error event
+                if (parsed.type === 'error') {
+                  const errorMessage = parsed.data?.message || 'Stream error';
+                  throw new Error(errorMessage);
+                }
               } catch (e) {
-                console.error('Error parsing SSE data:', e);
+                console.error('Error parsing SSE data:', e, data);
+                // If it's an error we threw, rethrow
+                if (e instanceof Error && e.message.startsWith('Stream error')) {
+                  throw e;
+                }
               }
-            } else if (line.startsWith('ping:')) {
+            } else if (line.startsWith('ping:') || line.startsWith(': ping')) {
               // Keep-alive ping, ignore
               continue;
             }

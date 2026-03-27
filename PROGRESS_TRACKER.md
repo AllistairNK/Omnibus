@@ -239,6 +239,8 @@ This document tracks the implementation progress of the AI Chatbot with RAG proj
   - [x] Deploy frontend to Vercel/Netlify
   - [x] Set up custom domain with SSL
 
+  update max tokens and set reasoning to minimal
+
 - [ ] **Task 10.2**: Monitoring & Analytics (0/5 subtasks)
   - [ ] Implement application logging
   - [ ] Set up error tracking (Sentry)
