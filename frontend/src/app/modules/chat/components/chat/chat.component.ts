@@ -352,10 +352,10 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         const lastMessage = this.messages[this.messages.length - 1];
         if (lastMessage.role === 'assistant' && lastMessage.metadata?.streaming) {
           const loadingFrame = this.asciiLoadingFrames[frameIndex % this.asciiLoadingFrames.length];
-          this.messages[this.messages.length - 1] = {
+          this.updateMessage(this.messages.length - 1, {
             ...lastMessage,
             content: lastMessage.content + '\n' + loadingFrame
-          };
+          });
           frameIndex++;
         }
       }
@@ -380,6 +380,51 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     } catch(err) { }
   }
 
+  /**
+   * Helper method to add a message to the messages array with proper change detection
+   */
+  private addMessage(message: ChatMessage): void {
+    // Create a new array reference to trigger change detection
+    this.messages = [...this.messages, message];
+    
+    // Force change detection
+    this.cdr.detectChanges();
+    
+    // Notify virtual scroll viewport to recalculate if available
+    if (this.viewport) {
+      this.viewport.checkViewportSize();
+    }
+    
+    // Scroll to bottom after a brief delay to ensure DOM is updated
+    setTimeout(() => this.scrollToBottom(), 50);
+  }
+
+  /**
+   * Helper method to update a message at a specific index
+   */
+  private updateMessage(index: number, message: ChatMessage): void {
+    const newMessages = [...this.messages];
+    newMessages[index] = message;
+    this.messages = newMessages;
+    this.cdr.detectChanges();
+    
+    if (this.viewport) {
+      this.viewport.checkViewportSize();
+    }
+  }
+
+  /**
+   * Helper method to clear all messages
+   */
+  private clearMessages(): void {
+    this.messages = [];
+    this.cdr.detectChanges();
+    
+    if (this.viewport) {
+      this.viewport.checkViewportSize();
+    }
+  }
+
   async sendMessage() {
     if (this.newMessage.trim()) {
       // Add to history
@@ -392,7 +437,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         content: this.newMessage,
         timestamp: new Date().toISOString()
       };
-      this.messages.push(userMessage);
+      this.addMessage(userMessage);
       const messageContent = this.newMessage;
       this.newMessage = '';
       
@@ -426,11 +471,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
             
             // Handle special commands that modify UI state
             if (messageContent.toLowerCase() === '/clear' || messageContent.toLowerCase() === '/cls') {
-              this.messages = [];
+              this.clearMessages();
             }
             
             // Add assistant response
-            this.messages.push({
+            this.addMessage({
               role: 'assistant',
               content: result.message,
               timestamp: new Date().toISOString(),
@@ -441,7 +486,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
             this.isTyping = false;
             this.stopThinkingAnimation();
             this.setEmotion('error');
-            this.messages.push({
+            this.addMessage({
               role: 'assistant',
               content: `Error executing command: ${error.message}`,
               timestamp: new Date().toISOString()
@@ -472,7 +517,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         let displayedResponse = '';
         
         // Create initial streaming message
-        this.messages.push({
+        this.addMessage({
           role: 'assistant',
           content: '',
           timestamp: new Date().toISOString(),
@@ -493,11 +538,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
             // Update the UI with typing simulation
             // Instead of simulating character by character (which could be slow for long responses),
             // we'll update in chunks but with a slight delay to simulate thinking
-            this.messages[streamingMessageIndex] = {
-              ...this.messages[streamingMessageIndex],
-              content: displayedResponse
-            };
-            // Also update streamingResponse for the separate streaming line
+            // Update streamingResponse for the separate streaming line (placeholder message content remains empty)
             this.streamingResponse = displayedResponse;
             
             // Force change detection to update the UI
@@ -513,13 +554,12 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         } catch (error: any) {
           if (error.name === 'AbortError') {
             // Stream was interrupted by user
-            this.messages[streamingMessageIndex] = {
+            this.updateMessage(streamingMessageIndex, {
               ...this.messages[streamingMessageIndex],
               content: displayedResponse + ' [Interrupted]',
               metadata: { streaming: false, interrupted: true }
-            };
+            });
             this.streamingResponse = '';
-            this.cdr.detectChanges();
             this.isTyping = false;
             this.isStreaming = false;
             this.currentStreamAbortController = undefined;
@@ -536,13 +576,12 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.stopLoadingAnimation();
         
         // Update final message (remove streaming metadata)
-        this.messages[streamingMessageIndex] = {
+        this.updateMessage(streamingMessageIndex, {
           role: 'assistant',
           content: fullResponse,
           timestamp: new Date().toISOString(),
           metadata: { streaming: false }
-        };
-        this.cdr.detectChanges();
+        });
         
       } catch (error) {
         console.error('Error in chat completion:', error);
@@ -555,11 +594,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         // Fallback to simulated response
         setTimeout(() => {
           const response = this.generateResponse(messageContent);
-          this.messages.push({
-            role: 'assistant',
-            content: response,
-            timestamp: new Date().toISOString()
-          });
+           this.addMessage({
+             role: 'assistant',
+             content: response,
+             timestamp: new Date().toISOString()
+           });
         }, 1000);
       }
     }
@@ -569,13 +608,13 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     // Remove any existing streaming message
     const lastMessage = this.messages[this.messages.length - 1];
     if (lastMessage.role === 'assistant' && lastMessage.metadata?.streaming) {
-      this.messages[this.messages.length - 1] = {
+      this.updateMessage(this.messages.length - 1, {
         ...lastMessage,
         content: response
-      };
+      });
     } else {
       // Add new streaming message
-      this.messages.push({
+      this.addMessage({
         role: 'assistant',
         content: response,
         timestamp: new Date().toISOString(),
@@ -722,7 +761,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     if (cmd === '/help' || cmd === '/?') {
       return 'Available commands: /help - Show this help, /clear - Clear terminal, /model - Switch model, /documents - List documents, /about - About this terminal';
     } else if (cmd === '/clear') {
-      this.messages = [];
+      this.clearMessages();
       return 'Terminal cleared.';
     } else if (cmd === '/about') {
       return 'AI Chatbot Terminal v1.0 - RAG-powered chatbot with document retrieval. Built with Angular 18 and FastAPI.';

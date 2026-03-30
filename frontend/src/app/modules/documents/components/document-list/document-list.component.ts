@@ -75,6 +75,7 @@ export class DocumentListComponent implements OnInit {
   }
 
   getFileIcon(fileName: string): string {
+    if (!fileName) return 'insert_drive_file'; 
     const extension = fileName.split('.').pop()?.toLowerCase();
     switch (extension) {
       case 'pdf': return 'picture_as_pdf';
@@ -108,7 +109,7 @@ export class DocumentListComponent implements OnInit {
       width: '400px',
       data: { 
         title: 'Delete Document',
-        message: `Are you sure you want to delete "${document.name}"? This action cannot be undone.`
+        message: `Are you sure you want to delete "${document.filename}"? This action cannot be undone.`
       }
     });
 

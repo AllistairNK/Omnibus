@@ -231,6 +231,9 @@ class LLMService:
         if not provider or not await provider.is_available():
             raise RuntimeError(f"Requested provider {provider_type} not available")
         
+        # Clear previous usage
+        self._last_stream_usage = None
+        
         try:
             async for chunk in provider.chat_completion_stream(
                 messages=messages,
@@ -240,9 +243,25 @@ class LLMService:
                 **kwargs,
             ):
                 yield chunk
+            
+            # After streaming completes, retrieve usage data from provider
+            # Check if provider has a method to get stream usage
+            if hasattr(provider, 'get_stream_usage'):
+                usage = provider.get_stream_usage()
+                if usage:
+                    self._last_stream_usage = usage
         except Exception as e:
             logger.error(f"Error in chat completion streaming: {e}")
             raise
+    
+    def get_last_stream_usage(self) -> Optional[Dict[str, Any]]:
+        """Get usage data from the last streaming completion.
+        
+        Returns:
+            Dict with usage statistics if available, None otherwise.
+            Structure depends on provider (e.g., OpenAI: prompt_tokens, completion_tokens, total_tokens).
+        """
+        return getattr(self, '_last_stream_usage', None)
     
     async def count_tokens(
         self,

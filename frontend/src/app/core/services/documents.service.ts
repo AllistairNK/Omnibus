@@ -5,13 +5,16 @@ import { map, tap } from 'rxjs/operators';
 
 export interface Document {
   id: string;
-  name: string;
-  size: number;
-  uploaded_at: string;
-  status: 'uploaded' | 'processing' | 'processed' | 'failed';
+  filename: string;   // ✅ match the backend
+  file_size: number;
   file_type: string;
-  chunk_count?: number;
+  file_path: string;
+  uploaded_at: string;
+  processed_at: string | null;
+  chunk_count: number;
+  status: 'uploaded' | 'processing' | 'processed' | 'failed';
   user_id: string;
+  metadata: Record<string, any>;
 }
 
 export interface UploadProgress {
@@ -41,7 +44,7 @@ export class DocumentsService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.post(`${this.API_BASE}/documents`, formData, {
+    return this.http.post(`${this.API_BASE}/documents/upload`, formData, {
       reportProgress: true,
       observe: 'events'
     }).pipe(

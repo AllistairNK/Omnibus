@@ -372,9 +372,9 @@ export class CommandParserService {
               
               let response = `Documents in knowledge base (${documents.length} total):\n`;
               documents.forEach((doc, index) => {
-                const sizeMB = (doc.size / (1024 * 1024)).toFixed(2);
+                const sizeMB = (doc.file_size / (1024 * 1024)).toFixed(2);
                 const statusIcon = doc.status === 'processed' ? '✓' : doc.status === 'processing' ? '⏳' : '⚠';
-                response += `${index + 1}. ${doc.name} (${doc.file_type}, ${sizeMB}MB, ${doc.chunk_count || 0} chunks) ${statusIcon}\n`;
+                response += `${index + 1}. ${doc.filename} (${doc.file_type}, ${sizeMB}MB, ${doc.chunk_count || 0} chunks) ${statusIcon}\n`;
               });
               
               const totalChunks = documents.reduce((sum, doc) => sum + (doc.chunk_count || 0), 0);
@@ -407,7 +407,7 @@ export class CommandParserService {
               const processed = documents.filter(d => d.status === 'processed').length;
               const processing = documents.filter(d => d.status === 'processing').length;
               const failed = documents.filter(d => d.status === 'failed').length;
-              const totalSizeMB = documents.reduce((sum, doc) => sum + (doc.size / (1024 * 1024)), 0);
+              const totalSizeMB = documents.reduce((sum, doc) => sum + (doc.file_size / (1024 * 1024)), 0);
               const totalChunks = documents.reduce((sum, doc) => sum + (doc.chunk_count || 0), 0);
               
               return `Document Statistics:\n- Total documents: ${documents.length}\n- Processed: ${processed}\n- Processing: ${processing}\n- Failed: ${failed}\n- Total size: ${totalSizeMB.toFixed(2)} MB\n- Total chunks: ${totalChunks}\n- Average chunks per document: ${(totalChunks / documents.length).toFixed(1)}`;

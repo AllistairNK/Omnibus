@@ -39,7 +39,7 @@ class LLMProvider(ABC):
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1000,
+        max_tokens: int = 600,
         stream: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
@@ -65,7 +65,7 @@ class LLMProvider(ABC):
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1000,
+        max_tokens: int = 500,
         **kwargs: Any,
     ) -> AsyncGenerator[str, None]:
         """
@@ -145,7 +145,7 @@ class OpenAIProvider(LLMProvider):
         model: str,
         messages: List[Dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: int = 1000,
+        max_tokens: int = 600,
         stream: bool = False,
         **kwargs: Any,
     ):
@@ -163,13 +163,24 @@ class OpenAIProvider(LLMProvider):
             "gpt-5-nano", "gpt-5-mini",
             "gpt-5.4-nano", "gpt-5.4-mini",
         }
+        # Models that support reasoning_effort parameter
+        REASONING_MODELS = {"o1", "o1-mini", "o3", "o3-mini", "o4-mini", "gpt-5-nano"}
 
+        # Add default reasoning_effort for reasoning models if not provided
+        kwargs_with_reasoning = kwargs.copy()
+        if model in REASONING_MODELS and "reasoning_effort" not in kwargs_with_reasoning:
+            kwargs_with_reasoning["reasoning_effort"] = "minimal"
+        
         base_params = {
             "model": model,
             "messages": messages,
             "stream": stream,
-            **kwargs,
+            **kwargs_with_reasoning,
         }
+
+        # Add stream_options for token usage tracking
+        if stream:
+            base_params["stream_options"] = {"include_usage": True}
 
         # Omit temperature entirely for models that don't support it
         if model not in FIXED_TEMPERATURE_MODELS:
@@ -206,7 +217,7 @@ class OpenAIProvider(LLMProvider):
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1000,
+        max_tokens: int = 600,
         stream: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
@@ -254,7 +265,7 @@ class OpenAIProvider(LLMProvider):
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1000,
+        max_tokens: int = 500,
         **kwargs: Any,
     ) -> AsyncGenerator[str, None]:
         """Stream chat completion tokens from OpenAI."""
@@ -275,7 +286,18 @@ class OpenAIProvider(LLMProvider):
                 **kwargs,
             )
             
+            # Initialize usage storage
+            self._stream_usage = None
+            
             async for chunk in response:
+                # Check for usage data in the chunk (final chunk when include_usage=True)
+                if hasattr(chunk, 'usage') and chunk.usage:
+                    self._stream_usage = {
+                        "prompt_tokens": chunk.usage.prompt_tokens,
+                        "completion_tokens": chunk.usage.completion_tokens,
+                        "total_tokens": chunk.usage.total_tokens,
+                    }
+                # Yield content tokens
                 if chunk.choices and chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
         except OpenAIError as e:
@@ -284,6 +306,15 @@ class OpenAIProvider(LLMProvider):
         except Exception as e:
             logger.error(f"Error in OpenAI chat completion streaming: {e}")
             raise
+    
+    def get_stream_usage(self) -> Optional[Dict[str, int]]:
+        """Get usage data from the last streaming completion.
+        
+        Returns:
+            Dict with prompt_tokens, completion_tokens, total_tokens if available,
+            None otherwise.
+        """
+        return getattr(self, '_stream_usage', None)
     
     async def count_tokens(self, text: str, model: Optional[str] = None) -> int:
         """Estimate token count for text using tiktoken if available."""
@@ -358,7 +389,7 @@ class AnthropicProvider(LLMProvider):
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1000,
+        max_tokens: int = 600,
         stream: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
@@ -427,7 +458,7 @@ class AnthropicProvider(LLMProvider):
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1000,
+        max_tokens: int = 500,
         **kwargs: Any,
     ) -> AsyncGenerator[str, None]:
         """Stream chat completion tokens from Anthropic."""
@@ -532,7 +563,7 @@ class GeminiProvider(LLMProvider):
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1000,
+        max_tokens: int = 600,
         stream: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
@@ -602,7 +633,7 @@ class GeminiProvider(LLMProvider):
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1000,
+        max_tokens: int = 500,
         **kwargs: Any,
     ) -> AsyncGenerator[str, None]:
         """Stream chat completion tokens from Gemini."""

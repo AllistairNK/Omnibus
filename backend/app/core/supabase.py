@@ -16,6 +16,7 @@ class SupabaseClient:
 
     _instance: Optional["SupabaseClient"] = None
     _client: Optional[Client] = None
+    _storage_client: Optional[Client] = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -38,6 +39,18 @@ class SupabaseClient:
                 supabase_key=settings.SUPABASE_KEY,
             )
             logger.info(f"Supabase client initialized for {settings.SUPABASE_URL}")
+            
+            # Initialize storage client with service role key if available, otherwise use same client
+            storage_key = settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_KEY
+            if storage_key != settings.SUPABASE_KEY:
+                self._storage_client = create_client(
+                    supabase_url=settings.SUPABASE_URL,
+                    supabase_key=storage_key,
+                )
+                logger.info("Supabase storage client initialized with service role key")
+            else:
+                self._storage_client = self._client
+                logger.info("Supabase storage client using default key")
         except Exception as e:
             logger.error(f"Failed to initialize Supabase client: {e}")
             raise
@@ -48,6 +61,13 @@ class SupabaseClient:
         if self._client is None:
             raise RuntimeError("Supabase client not initialized. Check credentials.")
         return self._client
+
+    @property
+    def storage_client(self) -> Client:
+        """Get the Supabase storage client instance (uses service role key if available)."""
+        if self._storage_client is None:
+            raise RuntimeError("Supabase storage client not initialized.")
+        return self._storage_client
 
     # Authentication methods
     async def sign_up(self, email: str, password: str) -> Dict[str, Any]:
@@ -120,7 +140,7 @@ class SupabaseClient:
     ) -> Dict[str, Any]:
         """Upload a file to Supabase Storage."""
         try:
-            response = self.client.storage.from_(bucket).upload(
+            response = self.storage_client.storage.from_(bucket).upload(
                 path=path,
                 file=file_content,
                 file_options={"content-type": file_type},
@@ -133,7 +153,7 @@ class SupabaseClient:
     async def get_file_url(self, bucket: str, path: str) -> str:
         """Get public URL for a file in Supabase Storage."""
         try:
-            response = self.client.storage.from_(bucket).get_public_url(path)
+            response = self.storage_client.storage.from_(bucket).get_public_url(path)
             return response
         except Exception as e:
             logger.error(f"Failed to get file URL: {e}")
@@ -142,7 +162,7 @@ class SupabaseClient:
     async def delete_file(self, bucket: str, path: str) -> Dict[str, Any]:
         """Delete a file from Supabase Storage."""
         try:
-            response = self.client.storage.from_(bucket).remove([path])
+            response = self.storage_client.storage.from_(bucket).remove([path])
             return response
         except Exception as e:
             logger.error(f"File deletion failed: {e}")
