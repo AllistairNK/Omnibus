@@ -108,7 +108,7 @@ python migrations/run_migrations.py
 
 ```bash
 # Development server with auto-reload
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --log-level debug
 ```
 
 The backend will be available at: `http://localhost:8000`

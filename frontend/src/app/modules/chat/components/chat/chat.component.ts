@@ -531,28 +531,32 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         // Start loading animation (disabled to avoid interfering with streaming)
         // this.startLoadingAnimation();
         
+        let completionSources: any[] = [];
+        let contextUsed = false;
         try {
-          for await (const token of stream) {
-            fullResponse += token;
-            
-            // Add token to display buffer
-            displayedResponse += token;
-            
-            // Update the UI with typing simulation
-            // Instead of simulating character by character (which could be slow for long responses),
-            // we'll update in chunks but with a slight delay to simulate thinking
-            // Update streamingResponse for the separate streaming line (placeholder message content remains empty)
-            this.streamingResponse = displayedResponse;
-            
-            // Force change detection to update the UI
-            this.cdr.detectChanges();
-            
-            // Add a small delay for typing effect (faster for short tokens, slower for longer ones)
-            const delay = Math.min(
-              this.streamingConfig.maxDisplayTime, 
-              Math.max(this.streamingConfig.minDisplayTime, token.length * 5)
-            );
-            await new Promise(resolve => setTimeout(resolve, delay));
+
+          for await (const event of stream) {
+            if (event.type === 'token') {
+              fullResponse += event.token;
+              displayedResponse += event.token;
+              this.streamingResponse = displayedResponse;
+              this.cdr.detectChanges();
+              const delay = Math.min(
+                this.streamingConfig.maxDisplayTime,
+                Math.max(this.streamingConfig.minDisplayTime, event.token.length * 5)
+              );
+              await new Promise(resolve => setTimeout(resolve, delay));
+
+            } else if (event.type === 'complete') {
+              completionSources = (event.data.sources || []).map((s: any) => ({
+                document_title:   s.source || 'Unknown',
+                similarity_score: s.relevance_score || 0,
+                chunk_text:       s.content_preview || '',
+                document_id:      s.document_id,
+                chunk_index:      s.chunk_index,
+              }));
+              contextUsed = event.data.context_used || false;
+            }
           }
         } catch (error: any) {
           if (error.name === 'AbortError') {
@@ -583,7 +587,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
           role: 'assistant',
           content: fullResponse,
           timestamp: new Date().toISOString(),
-          metadata: { streaming: false }
+          metadata: {
+            streaming: false,
+            sources: completionSources,
+            context_used: contextUsed,
+          }
         });
         
       } catch (error) {

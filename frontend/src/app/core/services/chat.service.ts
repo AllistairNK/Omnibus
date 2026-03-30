@@ -198,7 +198,7 @@ export class ChatService {
    * Alternative SSE implementation using fetch API for more control
    */
   private store = inject(Store);
-  async *streamMessage(request: ChatCompletionRequest, abortSignal?: AbortSignal): AsyncGenerator<string, void, unknown> {
+  async *streamMessage(request: ChatCompletionRequest, abortSignal?: AbortSignal): AsyncGenerator<any, void, unknown> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     const storeToken = await firstValueFrom(this.store.select(selectToken));
@@ -288,16 +288,17 @@ export class ChatService {
                   const now = Date.now();
                   if (tokenBuffer.length >= 3 || now - lastYieldTime >= 50) {
                     const combined = flushBuffer();
-                    if (combined) yield combined;
+                    if (combined) yield { type: 'token', token: combined };
                   }
                 }
                 // Handle completion event
                 if (parsed.type === 'complete') {
                   // Flush any remaining tokens
                   const remaining = flushBuffer();
-                  if (remaining) yield remaining;
+                  if (remaining) yield { type: 'token', token: remaining };
+                  yield { type: 'complete', data: parsed.data };  // ← yield sources
                   return;
-                }
+                }       
                 // Handle error event
                 if (parsed.type === 'error') {
                   const errorMessage = parsed.data?.message || 'Stream error';
@@ -319,7 +320,7 @@ export class ChatService {
 
         // Flush any remaining tokens
         const remaining = flushBuffer();
-        if (remaining) yield remaining;
+        if (remaining) yield { type: 'token', token: remaining };
       } finally {
         reader.releaseLock();
         clearTimeout(timeoutId);

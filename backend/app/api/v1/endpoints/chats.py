@@ -936,10 +936,10 @@ async def create_chat_completion_stream(
     """
     from fastapi.responses import StreamingResponse
     import json
-    
+    from app.services.llm_service import llm_service
+    from app.services.rag_service import rag_service
+
     try:
-        from app.services.llm_service import llm_service
-        
         # Initialize LLM service if needed
         if not llm_service._initialized:
             await llm_service.initialize()
@@ -1022,10 +1022,43 @@ async def create_chat_completion_stream(
         
         supabase._client.table("messages").insert(user_message_data).execute()
         
+        # --- 3. RAG pre-fetch (now previous_messages exists) ---
+        rag_context_text = ""
+        sources = []
+        if completion_request.use_rag:
+            context_docs = await rag_service.retrieve_context(
+                user_id=current_user["id"],
+                query=completion_request.message,
+                n_results=5,
+                min_score=0.3,
+            )
+            if context_docs:
+                rag_context_text = rag_service.format_context_for_prompt(context_docs)
+                sources = [
+                    {
+                        "document_id": d.get("document_id"),
+                        "chunk_index": d.get("chunk_index"),
+                        "source": d.get("source"),
+                        "relevance_score": d.get("score"),
+                        "content_preview": d.get("content", "")[:200],
+                    }
+                    for d in context_docs if d.get("score", 0) >= 0.3
+                ]
+
+        # --- 4. Build final messages[] once, never overwritten ---
+        system_content = "You are a helpful AI assistant."
+        if rag_context_text:
+            system_content = (
+                "You are an expert AI assistant. Answer using the context below. "
+                "Cite sources as [Doc X] when used.\n\nCONTEXT:\n" + rag_context_text
+            )
+
         # Prepare messages for LLM
-        llm_messages = previous_messages + [
-            {"role": "user", "content": completion_request.message}
-        ]
+        llm_messages = (
+            [{"role": "system", "content": system_content}]
+            + previous_messages[-10:]
+            + [{"role": "user", "content": completion_request.message}]
+        )
         
         # Create assistant message record (will be updated with full content later)
         assistant_message_id = str(uuid.uuid4())
@@ -1035,7 +1068,7 @@ async def create_chat_completion_stream(
             "role": "assistant",
             "content": "",  # Will be updated as we stream
             "timestamp": datetime.utcnow().isoformat(),
-            "metadata": {"streaming": True},
+            "metadata": {"streaming": True, "rag_sources": sources},
             "model": completion_request.model,
         }
         
@@ -1047,7 +1080,6 @@ async def create_chat_completion_stream(
             full_response = ""
             last_ping_time = asyncio.get_event_loop().time()
             token_buffer = []
-            
             try:
                 # Stream tokens from LLM
                 async for token in llm_service.chat_completion_stream(
@@ -1106,6 +1138,9 @@ async def create_chat_completion_stream(
                         "message_id": assistant_message_id,
                         "chat_id": chat_id,
                         "full_response": full_response,
+                        "context_used": len(sources) > 0,
+                        "context_document_count": len(sources),
+                        "sources": sources,
                         "usage": usage_data,
                     }
                 }

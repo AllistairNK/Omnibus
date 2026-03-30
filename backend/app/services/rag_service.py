@@ -190,16 +190,16 @@ Provide a balanced answer that:
                 min_score=min_score
             )
             
-            # Format results for RAG
             context_docs = []
             for result in results:
+                metadata = result.get("metadata", {})
                 context_docs.append({
-                    "content": result.get("content", ""),
-                    "metadata": result.get("metadata", {}),
-                    "score": result.get("score", 0.0),
-                    "document_id": result.get("document_id"),
-                    "chunk_index": result.get("chunk_index"),
-                    "source": result.get("source", "Unknown")
+                    "content":     result.get("document", ""),       # ← was "content"
+                    "metadata":    metadata,
+                    "score":       result.get("score", 0.0),
+                    "document_id": metadata.get("document_id"),      # ← was result.get()
+                    "chunk_index": metadata.get("chunk_index"),      # ← was result.get()
+                    "source":      metadata.get("filename", "Unknown"),  # ← was result.get("source")
                 })
             
             logger.info(f"Retrieved {len(context_docs)} context documents for query: {query[:50]}...")
