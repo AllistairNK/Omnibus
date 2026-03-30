@@ -9,11 +9,12 @@ import logging
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
-
+import traceback  # add at top of file
 from app.core.supabase import SupabaseClient
 from app.services.document_parser import DocumentParser
 from app.services.text_cleaner import TextCleaner
 from app.services.document_chunker import DocumentChunker
+from app.services.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ class DocumentProcessor:
             chunk_overlap=chunk_overlap,
             strategy=chunk_strategy
         )
+        self.vector_store = VectorStore()
     
     async def process_document(
         self,
@@ -67,19 +69,31 @@ class DocumentProcessor:
         logger.info(f"Processing document {document_id} ({filename})")
         
         try:
+            print(f"🔥 Step 1: Parsing {filename}")
             # Step 1: Parse document
             parsed_text, parse_metadata = DocumentParser.parse_document(
                 file_content, file_type, filename
             )
-            
+            print(f"🔥 Step 2: Cleaning text ({len(parsed_text)} chars)")
             # Step 2: Clean text
             cleaned_text = TextCleaner.clean_text(parsed_text, preserve_structure=True)
             text_metrics = TextCleaner.calculate_text_metrics(cleaned_text)
-            
+            print(f"🔥 Step 3: Chunking")
             # Step 3: Chunk text
-            chunks = self.chunker.chunk_text(cleaned_text, parse_metadata)
+            safe_metadata = {
+                "document_id": document_id,
+                "filename":    filename,
+                "file_type":   file_type,
+                "user_id":     user_id,
+                # Include safe scalar fields from parse_metadata only
+                "page_count":  parse_metadata.get("page_count"),
+                "word_count":  parse_metadata.get("word_count"),
+                "parser":      parse_metadata.get("parser"),
+            }
+            safe_metadata = {k: v for k, v in safe_metadata.items() if v is not None}
+            chunks = self.chunker.chunk_text(cleaned_text, safe_metadata)
             chunk_metrics = DocumentChunker.calculate_chunking_metrics(chunks)
-            
+            print(f"🔥 Step 4: Storing {len(chunks)} chunks in DB")
             # Step 4: Store chunks in database if Supabase client provided
             chunk_records = []
             if supabase_client and supabase_client._client:
@@ -89,7 +103,25 @@ class DocumentProcessor:
                     user_id=user_id,
                     supabase_client=supabase_client
                 )
+            print(f"🔥 Step 4.5: Storing embeddings in ChromaDB")
+                    # Step 4.5: Store embeddings in ChromaDB
+            vector_ids = []
+            try:
+                vector_ids = await self.vector_store.add_document_chunks(
+                    user_id=user_id,
+                    document_id=document_id,
+                    chunks=chunks,           # each chunk has "text" and "metadata" keys — matches VectorStore expectation
+                    metadata={               # global metadata applied to all chunks
+                        "filename":  filename,
+                        "file_type": file_type,
+                    }
+                )
+                logger.info(f"Stored {len(vector_ids)} embeddings in ChromaDB for document {document_id}")
+            except Exception as e:
+                # Non-fatal — Supabase chunks are stored, RAG search just won't work yet
+                logger.error(f"Failed to store embeddings for document {document_id}: {e}")
             
+            print(f"🔥 Step 5: Updating status")
             # Step 5: Update document status
             if supabase_client and supabase_client._client:
                 await self._update_document_status(
@@ -116,7 +148,7 @@ class DocumentProcessor:
             return processing_result
             
         except Exception as e:
-            logger.error(f"Failed to process document {document_id}: {e}")
+            logger.error(f"Failed to process document {document_id}: {traceback.format_exc()}")
             
             # Update document status to failed
             if supabase_client and supabase_client._client:

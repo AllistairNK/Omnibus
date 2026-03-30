@@ -1,7 +1,7 @@
 <div class="terminal-container">
-  <!-- ASCII Art Header -->
-  <div class="ascii-art">
-    <pre class="ascii-text">
+        <!-- ASCII Art Header -->
+      <div class="ascii-art">
+        <pre class="ascii-text">
  ::::::::  ::::    ::::  ::::    ::: ::::::::::: :::::::::  :::    :::  ::::::::  
 :+:    :+: +:+:+: :+:+:+ :+:+:   :+:     :+:     :+:    :+: :+:    :+: :+:    :+: 
 +:+    +:+ +:+ +:+:+ +:+ :+:+:+  +:+     +:+     +:+    +:+ +:+    +:+ +:+        
@@ -9,11 +9,22 @@
 +#+    +#+ +#+       +#+ +#+  +#+#+#     +#+     +#+    +#+ +#+    +#+        +#+ 
 #+#    #+# #+#       #+# #+#   #+#+#     #+#     #+#    #+# #+#    #+# #+#    #+# 
  ########  ###       ### ###    #### ########### #########   ########   ########  
-    </pre>
-    <div class="terminal-header">
-      <span class="prompt-symbol">$</span> AI Chatbot Terminal v1.0 | Type <span class="command">/help</span> for commands
-    </div>
-  </div>
+        </pre>
+        <div class="terminal-header">
+          <span class="prompt-symbol">$</span> AI Chatbot Terminal v1.0 | Type <span class="command">/help</span> for commands
+        </div>
+      </div>
+  <!-- Main Layout with Sidebar -->
+  <div class="chat-layout">
+    <!-- Chat History Sidebar -->
+    <app-chat-history-sidebar
+      [(isOpen)]="sidebarOpen"
+      (chatSelected)="onChatSelected($event)">
+    </app-chat-history-sidebar>
+
+    <!-- Main Terminal Content -->
+    <div class="terminal-main-content">
+
 
   <!-- ASCII Emotion Display -->
   <div class="ascii-emotion-container" [class.transitioning]="isEmotionTransitioning">
@@ -223,6 +234,9 @@
       </div>
     </div>
   </div>
+  
+    </div> <!-- Close terminal-main-content -->
+  </div> <!-- Close chat-layout -->
 
   <!-- Particle Effects Container -->
   <div class="particle-container">

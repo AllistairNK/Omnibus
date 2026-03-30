@@ -21,6 +21,39 @@ class DocumentParser:
     """Parser for extracting text from different document formats."""
 
     @staticmethod
+    def _sanitize_metadata(metadata: Dict) -> Dict:
+        """
+        Convert metadata values to JSON-serializable types.
+        
+        Args:
+            metadata: Dictionary potentially containing non-serializable values
+            
+        Returns:
+            Sanitized dictionary with stringified values
+        """
+        import json
+        from datetime import datetime, date
+        
+        def _serialize(obj):
+            if isinstance(obj, (datetime, date)):
+                return obj.isoformat()
+            elif hasattr(obj, '__dict__'):
+                return str(obj)
+            else:
+                return obj
+        
+        sanitized = {}
+        for key, value in metadata.items():
+            try:
+                # Try to serialize the value to see if it's JSON-serializable
+                json.dumps(value)
+                sanitized[key] = value
+            except (TypeError, ValueError):
+                # If not serializable, convert to string
+                sanitized[key] = str(value)
+        return sanitized
+
+    @staticmethod
     def parse_pdf(file_content: bytes) -> Tuple[str, Dict[str, any]]:
         """
         Extract text from PDF file.
@@ -36,9 +69,12 @@ class DocumentParser:
             reader = PdfReader(pdf_file)
             
             text_parts = []
+            # Convert pdf_metadata to serializable dict
+            raw_metadata = reader.metadata or {}
+            pdf_metadata = DocumentParser._sanitize_metadata(dict(raw_metadata))
             metadata = {
                 "page_count": len(reader.pages),
-                "pdf_metadata": reader.metadata or {},
+                "pdf_metadata": pdf_metadata,
                 "has_encryption": reader.is_encrypted,
             }
             
@@ -64,7 +100,9 @@ class DocumentParser:
                     "creation_date": getattr(reader.metadata, "creation_date", None),
                     "modification_date": getattr(reader.metadata, "modification_date", None),
                 })
-            
+
+            # Sanitize all metadata to ensure JSON serializability
+            metadata = DocumentParser._sanitize_metadata(metadata)
             return full_text, metadata
             
         except Exception as e:

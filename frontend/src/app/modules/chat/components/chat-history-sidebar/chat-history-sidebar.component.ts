@@ -15,7 +15,10 @@ export class ChatHistorySidebarComponent implements OnInit {
   loading = false;
   error: string | null = null;
   selectedChatId: string | null = null;
-
+  currentPage = 1;
+  pageSize = 10;
+  totalChats = 0;
+  totalPages = 1;
   constructor(private chatService: ChatService) {}
 
   ngOnInit() {
@@ -27,8 +30,12 @@ export class ChatHistorySidebarComponent implements OnInit {
   this.error = null;
   
   try {
-    const response = await firstValueFrom(this.chatService.getChats(1, 20));
+    const response = await firstValueFrom(
+      this.chatService.getChats(this.currentPage, this.pageSize)  // use currentPage, not hardcoded 1
+    );
     this.chats = response.chats;
+    this.totalChats = response.total;
+    this.totalPages = Math.ceil(response.total / this.pageSize); // instead of response.page_size
     
     if (this.chats.length > 0 && !this.selectedChatId) {
       this.selectChat(this.chats[0].id);
@@ -42,60 +49,87 @@ export class ChatHistorySidebarComponent implements OnInit {
   }
 }
 
+goToPage(page: number) {
+  if (page < 1 || page > this.totalPages) return;
+  this.currentPage = page;
+  this.loadChats();
+}
+
   selectChat(chatId: string) {
     this.selectedChatId = chatId;
     this.chatSelected.emit(chatId);
   }
 
-  createNewChat() {
-    this.chatService.createChat('New Chat', 'gpt-5-nano').subscribe({
-      next: (chat) => {
-        this.chats.unshift(chat);
-        this.selectChat(chat.id);
+createNewChat() {
+  this.chatService.createChat('New Chat', 'gpt-5-nano').subscribe({
+    next: (chat) => {
+      // New chat goes to top of list — go to page 1 to show it
+      this.currentPage = 1;
+      this.totalChats++;
+      this.totalPages = Math.ceil(this.totalChats / this.pageSize);
+      this.loadChats();
+      this.selectChat(chat.id);
+    },
+    error: (error) => {
+      console.error('Error creating chat:', error);
+      const mockChat: ChatSession = {
+        id: 'mock-' + Date.now(),
+        user_id: 'user-1',
+        title: 'New Chat',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        model_used: 'gpt-5-nano',
+        metadata: {},
+        message_count: 0
+      };
+      this.chats.unshift(mockChat);
+      this.totalChats++;
+      this.totalPages = Math.ceil(this.totalChats / this.pageSize);
+      this.selectChat(mockChat.id);
+    }
+  });
+}
+
+deleteChat(chatId: string, event: Event) {
+  event.stopPropagation();
+  
+  if (confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+    this.chatService.deleteChat(chatId).subscribe({
+      next: () => {
+        this.chats = this.chats.filter(chat => chat.id !== chatId);
+        this.totalChats--;
+        this.totalPages = Math.ceil(this.totalChats / this.pageSize);
+
+        if (this.selectedChatId === chatId) {
+          this.selectedChatId = null;
+          if (this.chats.length > 0) {
+            this.selectChat(this.chats[0].id);
+          }
+        }
+
+        // If current page is now empty (deleted last item on page), go back one
+        if (this.chats.length === 0 && this.currentPage > 1) {
+          this.goToPage(this.currentPage - 1);
+        }
       },
       error: (error) => {
-        console.error('Error creating chat:', error);
-        // Create mock chat for demonstration
-        const mockChat: ChatSession = {
-          id: 'mock-' + Date.now(),
-          user_id: 'user-1',
-          title: 'New Chat',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          model_used: 'gpt-5-nano',
-          metadata: {},
-          message_count: 0
-        };
-        this.chats.unshift(mockChat);
-        this.selectChat(mockChat.id);
+        console.error('Error deleting chat:', error);
+        alert('Failed to delete chat. Please try again.');
       }
     });
   }
-
-  deleteChat(chatId: string, event: Event) {
-    event.stopPropagation();
-    
-    if (confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
-      this.chatService.deleteChat(chatId).subscribe({
-        next: () => {
-          this.chats = this.chats.filter(chat => chat.id !== chatId);
-          if (this.selectedChatId === chatId && this.chats.length > 0) {
-            this.selectChat(this.chats[0].id);
-          } else if (this.chats.length === 0) {
-            this.selectedChatId = null;
-          }
-        },
-        error: (error) => {
-          console.error('Error deleting chat:', error);
-          alert('Failed to delete chat. Please try again.');
-        }
-      });
-    }
-  }
+}
 
   toggleSidebar() {
     this.isOpen = !this.isOpen;
     this.isOpenChange.emit(this.isOpen);
+  }
+
+  /**
+   * Refresh the chat list
+   */
+  refreshChats() {
+    this.loadChats();
   }
 
   formatDate(dateString: string): string {

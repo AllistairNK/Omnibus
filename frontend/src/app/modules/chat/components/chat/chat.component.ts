@@ -45,6 +45,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   private currentStreamAbortController?: AbortController;
   protected isStreaming = false;
   
+  // Sidebar properties
+  sidebarOpen = true;
+  
   // ASCII loading animations (kept for backward compatibility)
   private asciiLoadingFrames = [
     '⠋ Loading',
@@ -979,6 +982,75 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.selectedSuggestionIndex <= 0 
           ? this.commandSuggestions.length - 1 
           : this.selectedSuggestionIndex - 1;
+    }
+  }
+
+  /**
+   * Handle chat selection from sidebar
+   */
+  async onChatSelected(chatId: string): Promise<void> {
+    console.log('Chat selected:', chatId);
+    
+    // Don't reload if it's the same chat
+    if (this.currentChatId === chatId) {
+      return;
+    }
+    
+    this.currentChatId = chatId;
+    
+    // Reset message state for the new chat
+    this.messages = [];
+    this.currentPage = 1;
+    this.hasMoreMessages = true;
+    this.totalMessages = 0;
+    
+    // Show loading state
+    this.isLoadingMessages = true;
+    
+    try {
+      // Load messages for the selected chat
+      const response = await firstValueFrom(
+        this.chatService.getChatMessages(chatId, this.currentPage, this.pageSize)
+      );
+      
+      this.messages = response.messages;
+      this.totalMessages = response.total;
+      this.hasMoreMessages = this.messages.length < this.totalMessages;
+      
+      if (this.hasMoreMessages) {
+        this.currentPage++;
+      }
+      
+      // Add a system message indicating chat switch
+      if (this.messages.length === 0) {
+        this.messages.push({
+          role: 'assistant',
+          content: `Started new chat session. Type your first message to begin.`,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        this.messages.unshift({
+          role: 'system',
+          content: `Loaded chat history with ${this.messages.length} messages.`,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Scroll to bottom to show latest messages
+      setTimeout(() => this.scrollToBottom(), 100);
+      
+    } catch (error) {
+      console.error('Error loading chat messages:', error);
+      // Fallback to demo messages
+      this.messages = [
+        { 
+          role: 'assistant', 
+          content: `Switched to chat: ${chatId}. Unable to load chat history from server.`, 
+          timestamp: new Date().toISOString() 
+        }
+      ];
+    } finally {
+      this.isLoadingMessages = false;
     }
   }
 }

@@ -15,6 +15,12 @@
   min-width: 300px;
 }
 
+:host {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .chat-history-sidebar.closed {
   width: 60px;
   min-width: 60px;
@@ -28,6 +34,12 @@
   padding: 15px 20px;
   border-bottom: 1px solid #333;
   background: #0a0a0a;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .sidebar-title {
@@ -62,6 +74,29 @@
 .toggle-button:hover {
   background: #333;
   border-color: #00ff00;
+}
+
+.refresh-button {
+  background: #222;
+  color: #00aaff;
+  border: 1px solid #333;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.refresh-button:hover {
+  background: #333;
+  border-color: #00aaff;
+  color: #00ccff;
+  transform: rotate(90deg);
 }
 
 /* Sidebar Content */

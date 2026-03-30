@@ -6,13 +6,14 @@ import logging
 import os
 import uuid
 from typing import Any, Dict, List, Optional
-
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+import traceback
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.core.supabase import SupabaseClient
+from app.services.document_processor import DocumentProcessor
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -207,6 +208,7 @@ async def create_document(
 
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def upload_document(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     metadata: Optional[str] = Form(None),
     current_user: Dict[str, Any] = Depends(get_current_user),
@@ -312,6 +314,16 @@ async def upload_document(
             )
         
         created_doc = result.data[0]
+        
+        # Add background task to process the document
+        background_tasks.add_task(
+            process_document_background,
+            document_id=created_doc["id"],
+            file_content=file_content,
+            file_type=file_ext,
+            filename=filename,
+            user_id=user_id
+        )
         
         return {
             "id": created_doc["id"],
@@ -590,10 +602,17 @@ async def get_document_preview(
             for chunk in chunks:
                 if chunk.get("content"):
                     preview_content += chunk["content"] + "\n\n"
+            
+            if not preview_content:
+                preview_content = "Document processed but no content available."
+                
+        elif status == "processing":
+            preview_content = "Document is currently being processed. Please check back in a few moments."
+        elif status == "failed":
+            preview_content = "Document processing failed. Please try uploading again or contact support."
         else:
-            # Document not processed, try to fetch file from storage and parse a preview
-            # For simplicity, return a message
-            preview_content = "Document is not yet processed. Preview unavailable."
+            # Document uploaded but not yet processing
+            preview_content = "Document has been uploaded and is queued for processing. Preview will be available shortly."
         
         # Limit preview length
         max_length = 2000
@@ -665,3 +684,68 @@ async def get_document_chunks(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch document chunks",
         )
+
+
+async def process_document_background(
+    document_id: str,
+    file_content: bytes,
+    file_type: str,
+    filename: str,
+    user_id: str
+) -> None:
+    """
+    Background task to process a document after upload.
+    
+    This function is called asynchronously to parse, clean, chunk,
+    and store document content without blocking the upload response.
+    """
+    print(f"🔥 BACKGROUND TASK STARTED: {document_id}")
+    try:
+        logger.info(f"Starting background processing for document {document_id}")
+        print("🔥 Initializing Supabase...")
+        # Initialize Supabase client
+        supabase = SupabaseClient()
+        if not supabase._client:
+            logger.error(f"Supabase client not initialized for document {document_id}")
+            return
+        print(f"🔥 Supabase client: {supabase._client is not None}")
+        
+        print("🔥 Updating status to processing...")
+        # Update document status to processing
+        try:
+            supabase._client.table("documents").update({
+                "status": "processing",
+                "processed_at": None
+            }).eq("id", document_id).execute()
+        except Exception as e:
+            logger.warning(f"Failed to update document status to processing: {e}")
+        print("🔥 Starting DocumentProcessor...")
+        # Process the document
+        processor = DocumentProcessor()
+        await processor.process_document(
+            document_id=document_id,
+            file_content=file_content,
+            file_type=file_type,
+            filename=filename,
+            user_id=user_id,
+            supabase_client=supabase
+        )
+        
+        logger.info(f"Background processing completed for document {document_id}")
+        
+    except Exception as e:
+        logger.error(f"Background processing failed for document {document_id}: {traceback.format_exc()}")
+        print(f"🔥 CRASHED: {traceback.format_exc()}")
+        # Update document status to failed
+        try:
+            supabase = SupabaseClient()
+            if supabase._client:
+                supabase._client.table("documents").update({
+                    "status": "failed",
+                    "metadata": {
+                        "error": str(e),
+                        "processing_error": True
+                    }
+                }).eq("id", document_id).execute()
+        except Exception as update_error:
+            logger.error(f"Failed to update document status to failed: {update_error}")

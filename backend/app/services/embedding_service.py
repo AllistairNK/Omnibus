@@ -42,7 +42,11 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         """
         self.api_key = api_key or settings.OPENAI_API_KEY
         self.model = model or settings.OPENAI_EMBEDDING_MODEL
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = OpenAI(
+            api_key=self.api_key,
+            timeout=30.0,  # Add this — stops it hanging forever
+            max_retries=1
+            )
         
         # Model dimension mapping
         self._model_dimensions = {
@@ -61,7 +65,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             import asyncio
             from functools import partial
             
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             generate_fn = partial(
                 self.client.embeddings.create,
                 model=self.model,
@@ -128,7 +132,7 @@ class LocalEmbeddingProvider(EmbeddingProvider):
             import asyncio
             from functools import partial
             
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             encode_fn = partial(self.model.encode, texts, convert_to_numpy=True)
             
             embeddings = await loop.run_in_executor(None, encode_fn)

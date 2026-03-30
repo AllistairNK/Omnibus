@@ -4,7 +4,7 @@ Vector storage service for managing document embeddings in ChromaDB.
 Provides functionality for storing, retrieving, and searching vector embeddings
 with support for per-user collections.
 """
-
+import asyncio
 import logging
 import uuid
 from typing import Dict, List, Optional, Tuple, Any
@@ -35,40 +35,31 @@ class VectorStore:
         self._dimensions = None
     
     async def _get_client(self):
-        """Get or create ChromaDB client."""
         if self.client is not None:
             return self.client
         
-        try:
-            # Try to connect to ChromaDB server
-            self.client = chromadb.HttpClient(
+        import asyncio
+        loop = asyncio.get_running_loop()
+        
+        def connect():
+            client = chromadb.HttpClient(
                 host=settings.CHROMA_HOST,
                 port=settings.CHROMA_PORT,
-                settings=Settings(
-                    chroma_server_auth_provider="chromadb.auth.token_authn.TokenAuthenticationClient",
-                    chroma_client_auth_provider="chromadb.auth.token_authn.TokenAuthenticationClient",
-                )
             )
-            
-            # Test connection
-            self.client.heartbeat()
-            logger.info(f"Connected to ChromaDB at {settings.CHROMA_HOST}:{settings.CHROMA_PORT}")
-            
-        except Exception as e:
-            logger.warning(f"Failed to connect to ChromaDB server: {e}. Falling back to persistent client.")
-            
-            # Fall back to persistent client (embedded mode)
-            try:
-                self.client = chromadb.PersistentClient(
-                    path="./chroma_data",
-                    settings=Settings(anonymized_telemetry=False)
-                )
-                logger.info("Using persistent ChromaDB client")
-            except Exception as inner_e:
-                logger.error(f"Failed to create persistent ChromaDB client: {inner_e}")
-                raise
+            client.heartbeat()
+            return client
         
-        return self.client
+        try:
+            self.client = await loop.run_in_executor(None, connect)
+            logger.info(f"Connected to ChromaDB")
+        except Exception as e:
+            logger.warning(f"ChromaDB server failed: {e}, falling back to persistent")
+            self.client = await loop.run_in_executor(
+                None,
+                lambda: chromadb.PersistentClient(path="./chroma_data")
+            )
+        
+        return self.client  
     
     def _get_collection_name(self, user_id: str) -> str:
         """Generate collection name for a user."""
@@ -90,9 +81,22 @@ class VectorStore:
         Returns:
             ChromaDB collection instance
         """
+        import asyncio
+        loop = asyncio.get_running_loop()
         client = await self._get_client()
         collection_name = self._get_collection_name(user_id)
         
+        def _get_or_create():
+            try:
+                return client.get_collection(name=collection_name)
+            except Exception:
+                return client.create_collection(
+                    name=collection_name,
+                    metadata={"user_id": user_id},
+                    embedding_function=None
+                )
+        
+        return await loop.run_in_executor(None, _get_or_create)
         try:
             # Try to get existing collection
             collection = client.get_collection(name=collection_name)
@@ -130,10 +134,10 @@ class VectorStore:
         """
         if not chunks:
             return []
-        
+        print(f"🔥 VS: extracting texts")
         # Extract texts for embedding
         texts = [chunk.get("text", "") for chunk in chunks]
-        
+        print(f"🔥 VS: generating embeddings for {len(texts)} texts")
         # Generate embeddings
         embeddings = await self.embedding_service.generate_embeddings(texts)
         
@@ -160,17 +164,20 @@ class VectorStore:
             
             chunk_metadatas.append(chunk_metadata)
             chunk_ids.append(f"{document_id}_{i}")
-        
+        print(f"🔥 VS: embeddings done, adding to ChromaDB")
         # Get collection and add documents
         collection = await self.get_or_create_collection(user_id)
         
         try:
-            collection.add(
+            print(f"🔥 VS: got collection, calling collection.add")
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, lambda: collection.add(
                 embeddings=embeddings,
                 documents=texts,
                 metadatas=chunk_metadatas,
                 ids=chunk_ids
-            )
+            ))
+            print(f"🔥 VS: done")
             logger.info(f"Added {len(chunks)} chunks for document {document_id} to vector store")
             
         except InvalidDimensionException as e:
@@ -187,7 +194,7 @@ class VectorStore:
                 metadatas=chunk_metadatas,
                 ids=chunk_ids
             )
-        
+        print(f"🔥 VS: done")
         return chunk_ids
     
     async def _recreate_collection_with_correct_dimensions(
