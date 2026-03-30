@@ -1094,22 +1094,34 @@ async def create_chat_completion_stream(
                     }
                     yield f"data: {json.dumps(event_data)}\n\n"
                 
-                # Send completion event
+                # Get usage data from LLM service
+                usage_data = None
+                if hasattr(llm_service, 'get_last_stream_usage'):
+                    usage_data = llm_service.get_last_stream_usage()
+                
+                # Send completion event with usage data
                 completion_event = {
                     "type": "complete",
                     "data": {
                         "message_id": assistant_message_id,
                         "chat_id": chat_id,
                         "full_response": full_response,
+                        "usage": usage_data,
                     }
                 }
                 yield f"data: {json.dumps(completion_event)}\n\n"
                 
-                # Update assistant message with full content
-                supabase._client.table("messages").update({
+                # Update assistant message with full content and usage
+                update_data = {
                     "content": full_response,
                     "metadata": {"streaming": False},
-                }).eq("id", assistant_message_id).execute()
+                }
+                if usage_data:
+                    update_data["tokens_used"] = usage_data.get("total_tokens")
+                    # Store full usage in metadata
+                    update_data["metadata"]["usage"] = usage_data
+                
+                supabase._client.table("messages").update(update_data).eq("id", assistant_message_id).execute()
                 
                 # Update chat's updated_at timestamp
                 supabase._client.table("chats").update({

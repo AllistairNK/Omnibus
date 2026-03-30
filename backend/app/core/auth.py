@@ -29,15 +29,15 @@ class TokenData(BaseModel):
 
 async def verify_token(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-) -> TokenData:
+) -> tuple[TokenData, str]:
     """
-    Verify Supabase JWT token and return token data.
+    Verify Supabase JWT token and return token data along with raw token.
 
     Args:
         credentials: HTTP Bearer token from Authorization header.
 
     Returns:
-        TokenData: Decoded token data.
+        Tuple of (TokenData, raw_token): Decoded token data and raw JWT token.
 
     Raises:
         HTTPException: If token is missing or invalid.
@@ -68,13 +68,14 @@ async def verify_token(
                 detail="Invalid token payload",
             )
 
-        return TokenData(
+        token_data = TokenData(
             sub=sub,
             email=email,
             role=payload.get("role"),
             app_metadata=payload.get("app_metadata"),
             user_metadata=payload.get("user_metadata"),
         )
+        return (token_data, token)
     except JWTError as e:
         logger.warning(f"JWT validation failed: {e}")
         raise HTTPException(
@@ -85,28 +86,30 @@ async def verify_token(
 
 
 async def get_current_user(
-    token_data: TokenData = Depends(verify_token),
+    token_data_and_token: tuple[TokenData, str] = Depends(verify_token),
 ) -> Dict[str, Any]:
     """
     Get current user from token data and optionally fetch from Supabase.
 
     Args:
-        token_data: Verified token data.
+        token_data_and_token: Tuple of (TokenData, raw_token) from verify_token.
 
     Returns:
-        Dict containing user information.
+        Dict containing user information including access_token.
     """
+    token_data, access_token = token_data_and_token
+    
     # Ensure user exists in our users table
     await ensure_user_exists(token_data.sub, token_data.email)
     
-    # For now, return token data as user.
-    # In the future, we could fetch additional user details from Supabase.
+    # Return user info with access_token for Supabase client operations
     return {
         "id": token_data.sub,
         "email": token_data.email,
         "role": token_data.role,
         "app_metadata": token_data.app_metadata,
         "user_metadata": token_data.user_metadata,
+        "access_token": access_token,
     }
 
 

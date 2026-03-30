@@ -2,6 +2,7 @@
 Custom middleware for request logging and error handling.
 """
 import time
+import traceback
 from typing import Callable, Optional, Dict, List
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -99,11 +100,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
         except Exception as exc:
-            # Log unhandled exceptions
-            logger.error(
-                f"Unhandled exception: {exc}",
-                exc_info=True,
-            )
+            # Log unhandled exceptions with full traceback
+            import traceback
+            traceback.print_exc()
+            logger.opt(exception=True).error(f"Unhandled exception: {exc}")
             response = JSONResponse(
                 status_code=500,
                 content={

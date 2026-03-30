@@ -59,6 +59,11 @@ class DocumentListResponse(BaseModel):
     total_pages: int
 
 
+class DocumentPreviewResponse(BaseModel):
+    """Response model for document preview."""
+    content: str
+
+
 @router.get("", response_model=DocumentListResponse)
 async def list_documents(
     page: int = Query(1, ge=1, description="Page number"),
@@ -265,6 +270,13 @@ async def upload_document(
             )
         except Exception as e:
             logger.error(f"Failed to upload file to Supabase Storage: {e}")
+            # Check if error indicates bucket not found
+            error_str = str(e)
+            if "Bucket not found" in error_str or "bucket not found" in error_str:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Storage bucket 'documents' does not exist. Please create the bucket in Supabase Storage or contact administrator.",
+                )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to upload file to storage",
@@ -510,7 +522,11 @@ async def delete_document(
             try:
                 await supabase.delete_file(bucket="documents", path=file_path)
             except Exception as e:
-                logger.warning(f"Failed to delete file from storage: {e}")
+                error_str = str(e)
+                if "Bucket not found" in error_str or "bucket not found" in error_str:
+                    logger.warning(f"Storage bucket 'documents' does not exist, skipping file deletion: {e}")
+                else:
+                    logger.warning(f"Failed to delete file from storage: {e}")
                 # Continue with metadata deletion even if storage deletion fails
         
         # Delete the document (cascade will delete related chunks)
@@ -525,6 +541,73 @@ async def delete_document(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete document",
+        )
+
+
+@router.get("/{document_id}/preview", response_model=DocumentPreviewResponse)
+async def get_document_preview(
+    document_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """
+    Get a preview of document content.
+    
+    Returns the first 2000 characters of the document content,
+    either from stored chunks or from the original file.
+    """
+    try:
+        supabase = SupabaseClient()
+        if not supabase._client:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Supabase client not initialized",
+            )
+        
+        # Get user ID
+        response = supabase._client.auth.get_user(current_user["access_token"])
+        user_id = response.user.id
+        
+        # Check if document exists and belongs to user
+        doc_exists = supabase._client.table("documents").select("id, status, file_path, file_type").eq("id", document_id).eq("user_id", user_id).execute()
+        if not doc_exists.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found",
+            )
+        
+        doc = doc_exists.data[0]
+        status = doc.get("status", "uploaded")
+        file_path = doc.get("file_path")
+        file_type = doc.get("file_type")
+        
+        preview_content = ""
+        
+        # If document is processed, fetch chunks
+        if status == "processed":
+            # Fetch first few chunks (limit 5)
+            result = supabase._client.table("document_chunks").select("content").eq("document_id", document_id).order("chunk_index").limit(5).execute()
+            chunks = result.data or []
+            for chunk in chunks:
+                if chunk.get("content"):
+                    preview_content += chunk["content"] + "\n\n"
+        else:
+            # Document not processed, try to fetch file from storage and parse a preview
+            # For simplicity, return a message
+            preview_content = "Document is not yet processed. Preview unavailable."
+        
+        # Limit preview length
+        max_length = 2000
+        if len(preview_content) > max_length:
+            preview_content = preview_content[:max_length] + "..."
+        
+        return {"content": preview_content}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching document preview: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch document preview",
         )
 
 

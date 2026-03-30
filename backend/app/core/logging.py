@@ -27,8 +27,18 @@ class InterceptHandler(logging.Handler):
             frame = frame.f_back
             depth += 1
 
+        # Safely get message, handling potential UnicodeDecodeError
+        try:
+            message = record.getMessage()
+        except UnicodeDecodeError:
+            # If message contains binary data, convert to safe representation
+            if isinstance(record.msg, bytes):
+                message = f"<binary data length={len(record.msg)}>"
+            else:
+                message = str(record.msg)
+        
         logger.opt(depth=depth, exception=record.exc_info).log(
-            level, record.getMessage()
+            level, message
         )
 
 
@@ -57,11 +67,15 @@ def configure_logging() -> None:
 
     # Intercept standard logging
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+    # Set root logger level to WARNING to suppress DEBUG/INFO logs from third-party libraries
+    logging.getLogger().setLevel(logging.WARNING)
 
     # Set loguru as handler for uvicorn and other loggers
-    for logger_name in ["uvicorn", "uvicorn.access", "uvicorn.error", "fastapi"]:
+    for logger_name in ["uvicorn", "uvicorn.access", "uvicorn.error", "fastapi", "httpx", "httpcore", "supabase", "logging"]:
         logging_logger = logging.getLogger(logger_name)
         logging_logger.handlers = [InterceptHandler()]
         logging_logger.propagate = False
+        # Set level to WARNING to avoid DEBUG logs that may contain binary data
+        logging_logger.setLevel(logging.WARNING)
 
     logger.info(f"Logging configured for {settings.PROJECT_NAME} ({settings.ENVIRONMENT})")
