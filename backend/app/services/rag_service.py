@@ -167,7 +167,7 @@ Provide a balanced answer that:
         user_id: str,
         query: str,
         n_results: int = 5,
-        min_score: float = 0.3
+        min_score: float = 0.1
     ) -> List[Dict[str, Any]]:
         """
         Retrieve relevant context from vector store.
@@ -360,7 +360,7 @@ Provide a balanced answer that:
                 user_id=user_id,
                 query=query,
                 n_results=5,
-                min_score=0.3
+                min_score=0.1
             )
             
             # Step 2: Format context and chat history for prompt

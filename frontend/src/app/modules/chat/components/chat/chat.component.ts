@@ -109,7 +109,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     useRag: true,
     ragMethod: 'auto',
     sourceCount: 5,
-    similarityThreshold: 70,
+    similarityThreshold: 20,
     includeSources: true,
     highlightMatches: true
   };
@@ -533,6 +533,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         
         let completionSources: any[] = [];
         let contextUsed = false;
+        let tokenUsage: { prompt_tokens: number, completion_tokens: number, total_tokens: number } | null = null;
+
         try {
 
           for await (const event of stream) {
@@ -556,7 +558,13 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
                 chunk_index:      s.chunk_index,
               }));
               contextUsed = event.data.context_used || false;
-            }
+
+              tokenUsage = {
+                prompt_tokens:     event.data.usage?.prompt_tokens     ?? event.data.prompt_tokens     ?? 0,
+                completion_tokens: event.data.usage?.completion_tokens ?? event.data.completion_tokens ?? 0,
+                total_tokens:      event.data.usage?.total_tokens      ?? event.data.total_tokens      ?? 0,
+              };
+                        }
           }
         } catch (error: any) {
           if (error.name === 'AbortError') {
@@ -581,16 +589,19 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.streamingResponse = '';
         this.currentStreamAbortController = undefined;
         this.stopLoadingAnimation();
-        
+
         // Update final message (remove streaming metadata)
         this.updateMessage(streamingMessageIndex, {
           role: 'assistant',
           content: fullResponse,
           timestamp: new Date().toISOString(),
+          tokens_used: tokenUsage?.total_tokens ?? undefined,
+          model: request.model ?? 'Unknown',
           metadata: {
             streaming: false,
             sources: completionSources,
             context_used: contextUsed,
+            token_usage: tokenUsage,  // ✅ ADD THIS
           }
         });
         

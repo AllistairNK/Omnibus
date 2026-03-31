@@ -1030,7 +1030,7 @@ async def create_chat_completion_stream(
                 user_id=current_user["id"],
                 query=completion_request.message,
                 n_results=5,
-                min_score=0.3,
+                min_score=0.1,
             )
             if context_docs:
                 rag_context_text = rag_service.format_context_for_prompt(context_docs)
@@ -1042,7 +1042,7 @@ async def create_chat_completion_stream(
                         "relevance_score": d.get("score"),
                         "content_preview": d.get("content", "")[:200],
                     }
-                    for d in context_docs if d.get("score", 0) >= 0.3
+                    for d in context_docs if d.get("score", 0) >= 0.1
                 ]
 
         # --- 4. Build final messages[] once, never overwritten ---
