@@ -19,7 +19,115 @@ export class ChatHistorySidebarComponent implements OnInit {
   pageSize = 10;
   totalChats = 0;
   totalPages = 1;
+
+  // Animation state for typewriter effect
+  private animatedTitles: Map<string, { displayedTitle: string, targetTitle: string, intervalId?: any }> = new Map();
+
   constructor(private chatService: ChatService) {}
+
+  /**
+   * Start a typewriter animation for a chat title.
+   * @param chatId The chat ID to animate
+   * @param targetTitle The final title to display
+   * @param speedMs Delay between characters in milliseconds (default 50)
+   */
+  animateChatTitle(chatId: string, targetTitle: string, speedMs: number = 50): void {
+    // Stop any existing animation for this chat
+    this.stopAnimation(chatId);
+
+    // Initialize displayed title as empty
+    this.animatedTitles.set(chatId, {
+      displayedTitle: '',
+      targetTitle,
+      intervalId: undefined
+    });
+
+    let index = 0;
+    const intervalId = setInterval(() => {
+      const entry = this.animatedTitles.get(chatId);
+      if (!entry) {
+        clearInterval(intervalId);
+        return;
+      }
+      if (index < targetTitle.length) {
+        entry.displayedTitle = targetTitle.substring(0, index + 1);
+        index++;
+        // Update the chat title in the chats array for UI
+        const chat = this.chats.find(c => c.id === chatId);
+        if (chat) {
+          chat.title = entry.displayedTitle;
+        }
+      } else {
+        // Animation complete
+        clearInterval(intervalId);
+        entry.intervalId = undefined;
+      }
+    }, speedMs);
+
+    const entry = this.animatedTitles.get(chatId);
+    if (entry) {
+      entry.intervalId = intervalId;
+    }
+  }
+
+  /**
+   * Stop animation for a chat.
+   */
+  private stopAnimation(chatId: string): void {
+    const entry = this.animatedTitles.get(chatId);
+    if (entry?.intervalId) {
+      clearInterval(entry.intervalId);
+    }
+    this.animatedTitles.delete(chatId);
+  }
+
+  /**
+   * Get the displayed title for a chat (with animation if applicable).
+   */
+  getDisplayedTitle(chat: ChatSession): string {
+    const entry = this.animatedTitles.get(chat.id);
+    if (entry) {
+      return entry.displayedTitle || chat.title;
+    }
+    return chat.title;
+  }
+
+  /**
+   * Add or update a chat in the local list (for real-time updates).
+   */
+  addOrUpdateChat(chat: ChatSession): void {
+    const index = this.chats.findIndex(c => c.id === chat.id);
+    if (index >= 0) {
+      // Update existing chat
+      this.chats[index] = chat;
+    } else {
+      // Add new chat at the beginning
+      this.chats.unshift(chat);
+      this.totalChats++;
+      this.totalPages = Math.ceil(this.totalChats / this.pageSize);
+    }
+  }
+
+  /**
+   * Replace a temporary chat with a real chat session.
+   * This is used when a temporary chat (created locally) is persisted to the backend.
+   */
+  replaceTemporaryChat(tempChatId: string, realChat: ChatSession): void {
+    const tempIndex = this.chats.findIndex(c => c.id === tempChatId);
+    if (tempIndex >= 0) {
+      // Replace the temporary chat with the real one
+      this.chats[tempIndex] = realChat;
+      console.log('Replaced temporary chat', tempChatId, 'with real chat', realChat.id);
+      
+      // If the temporary chat was selected, update the selection
+      if (this.selectedChatId === tempChatId) {
+        this.selectedChatId = realChat.id;
+      }
+    } else {
+      // If temporary chat not found, just add the real chat
+      this.addOrUpdateChat(realChat);
+    }
+  }
 
   ngOnInit() {
     this.loadChats();
@@ -61,62 +169,80 @@ goToPage(page: number) {
   }
 
 createNewChat() {
-  this.chatService.createChat('New Chat', 'gpt-5-nano').subscribe({
-    next: (chat) => {
-      // New chat goes to top of list — go to page 1 to show it
-      this.currentPage = 1;
-      this.totalChats++;
-      this.totalPages = Math.ceil(this.totalChats / this.pageSize);
-      this.loadChats();
-      this.selectChat(chat.id);
+  // Create a temporary chat session locally without hitting the backend
+  // The chat will be created on the backend only when the user sends their first message
+  const tempChatId = 'temp-' + Date.now();
+  const now = new Date().toISOString();
+  
+  const tempChat: ChatSession = {
+    id: tempChatId,
+    user_id: 'temp-user', // Placeholder until real user ID is available
+    title: 'New Chat',
+    created_at: now,
+    updated_at: now,
+    model_used: 'gpt-5-nano',
+    metadata: {
+      isTemporary: true,
+      pendingCreation: true
     },
-    error: (error) => {
-      console.error('Error creating chat:', error);
-      const mockChat: ChatSession = {
-        id: 'mock-' + Date.now(),
-        user_id: 'user-1',
-        title: 'New Chat',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        model_used: 'gpt-5-nano',
-        metadata: {},
-        message_count: 0
-      };
-      this.chats.unshift(mockChat);
-      this.totalChats++;
-      this.totalPages = Math.ceil(this.totalChats / this.pageSize);
-      this.selectChat(mockChat.id);
-    }
-  });
+    message_count: 0
+  };
+  
+  // Add temporary chat to the top of the list
+  this.chats.unshift(tempChat);
+  this.totalChats++;
+  this.totalPages = Math.ceil(this.totalChats / this.pageSize);
+  
+  // Select the temporary chat
+  this.selectChat(tempChatId);
+  
+  console.log('Created temporary chat session:', tempChatId, 'Backend creation deferred until first message');
 }
 
 deleteChat(chatId: string, event: Event) {
   event.stopPropagation();
   
   if (confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
-    this.chatService.deleteChat(chatId).subscribe({
-      next: () => {
-        this.chats = this.chats.filter(chat => chat.id !== chatId);
-        this.totalChats--;
-        this.totalPages = Math.ceil(this.totalChats / this.pageSize);
-
-        if (this.selectedChatId === chatId) {
-          this.selectedChatId = null;
-          if (this.chats.length > 0) {
-            this.selectChat(this.chats[0].id);
-          }
+    // Check if this is a temporary chat (starts with 'temp-')
+    const isTemporaryChat = chatId.startsWith('temp-');
+    
+    if (isTemporaryChat) {
+      // Temporary chats don't exist on backend, just remove from local list
+      this.removeChatFromList(chatId);
+      console.log('Deleted temporary chat:', chatId);
+    } else {
+      // Real chat - delete from backend
+      this.chatService.deleteChat(chatId).subscribe({
+        next: () => {
+          this.removeChatFromList(chatId);
+        },
+        error: (error) => {
+          console.error('Error deleting chat:', error);
+          alert('Failed to delete chat. Please try again.');
         }
+      });
+    }
+  }
+}
 
-        // If current page is now empty (deleted last item on page), go back one
-        if (this.chats.length === 0 && this.currentPage > 1) {
-          this.goToPage(this.currentPage - 1);
-        }
-      },
-      error: (error) => {
-        console.error('Error deleting chat:', error);
-        alert('Failed to delete chat. Please try again.');
-      }
-    });
+/**
+ * Remove a chat from the local list (common logic for both temporary and real chats)
+ */
+private removeChatFromList(chatId: string): void {
+  this.chats = this.chats.filter(chat => chat.id !== chatId);
+  this.totalChats--;
+  this.totalPages = Math.ceil(this.totalChats / this.pageSize);
+
+  if (this.selectedChatId === chatId) {
+    this.selectedChatId = null;
+    if (this.chats.length > 0) {
+      this.selectChat(this.chats[0].id);
+    }
+  }
+
+  // If current page is now empty (deleted last item on page), go back one
+  if (this.chats.length === 0 && this.currentPage > 1) {
+    this.goToPage(this.currentPage - 1);
   }
 }
 

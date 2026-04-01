@@ -18,6 +18,7 @@
   <div class="chat-layout">
     <!-- Chat History Sidebar -->
     <app-chat-history-sidebar
+      #chatHistorySidebar
       [(isOpen)]="sidebarOpen"
       (chatSelected)="onChatSelected($event)">
     </app-chat-history-sidebar>

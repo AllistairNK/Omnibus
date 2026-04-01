@@ -894,11 +894,17 @@ async def create_chat_completion(
         
         supabase._client.table("messages").insert(assistant_message_data).execute()
         
-        # Update chat's updated_at timestamp
-        supabase._client.table("chats").update({
+        # Update chat's updated_at timestamp and potentially title
+        update_data = {
             "updated_at": datetime.utcnow().isoformat(),
             "model_used": completion_request.model or chat.get("model_used"),
-        }).eq("id", chat_id).execute()
+        }
+        
+        # If chat title is still the default "New Chat", update it with the first message
+        if chat.get("title") == "New Chat" and completion_request.message:
+            update_data["title"] = completion_request.message[:50] + "..." if len(completion_request.message) > 50 else completion_request.message
+        
+        supabase._client.table("chats").update(update_data).eq("id", chat_id).execute()
         
         return {
             "chat_id": chat_id,
@@ -1158,11 +1164,17 @@ async def create_chat_completion_stream(
                 
                 supabase._client.table("messages").update(update_data).eq("id", assistant_message_id).execute()
                 
-                # Update chat's updated_at timestamp
-                supabase._client.table("chats").update({
+                # Update chat's updated_at timestamp and potentially title
+                chat_update_data = {
                     "updated_at": datetime.utcnow().isoformat(),
                     "model_used": completion_request.model or chat.get("model_used"),
-                }).eq("id", chat_id).execute()
+                }
+                
+                # If chat title is still the default "New Chat", update it with the first message
+                if chat.get("title") == "New Chat" and completion_request.message:
+                    chat_update_data["title"] = completion_request.message[:50] + "..." if len(completion_request.message) > 50 else completion_request.message
+                
+                supabase._client.table("chats").update(chat_update_data).eq("id", chat_id).execute()
                 
             except Exception as e:
                 logger.error(f"Error during streaming: {e}")

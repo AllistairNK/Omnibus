@@ -6,7 +6,7 @@ async def main():
     svc = SimilaritySearchService()
     results = await svc.semantic_search(
         user_id="d1335931-8ee7-46e4-a348-adae08b0e542",
-        query="what are manatees",
+        query="what are sparrows",
         n_results=3,
         min_score=0.1
     )

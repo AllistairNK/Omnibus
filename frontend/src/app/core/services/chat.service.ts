@@ -354,7 +354,7 @@ export class ChatService {
    * Update a chat session (e.g., change title)
    */
   updateChat(chatId: string, updates: { title?: string }): Observable<ChatSession> {
-    return this.http.patch<ChatSession>(`${this.API_BASE}/chats/${chatId}`, updates);
+    return this.http.put<ChatSession>(`${this.API_BASE}/chats/${chatId}`, updates);
   }
 
   /**

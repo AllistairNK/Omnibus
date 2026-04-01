@@ -44,7 +44,7 @@
            (click)="selectChat(chat.id)">
         
         <div class="chat-item-header">
-          <span class="chat-title">{{ chat.title || 'Untitled Chat' }}</span>
+           <span class="chat-title">{{ getDisplayedTitle(chat) || 'Untitled Chat' }}</span>
           <button class="delete-button" (click)="deleteChat(chat.id, $event)" title="Delete chat">
             ×
           </button>

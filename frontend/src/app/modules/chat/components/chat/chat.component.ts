@@ -1,11 +1,12 @@
 import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ChatService, ChatMessage, ChatCompletionRequest } from '../../../../core/services/chat.service';
+import { ChatService, ChatMessage, ChatCompletionRequest, ChatSession } from '../../../../core/services/chat.service';
 import { CommandParserService, CommandResult } from '../../../../core/services/command-parser.service';
 import { AsciiEmotionService, EmotionType } from '../../../../core/services/ascii-emotion.service';
 import { Subscription, Subject, timer } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { ChatHistorySidebarComponent } from '../chat-history-sidebar/chat-history-sidebar.component';
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
@@ -14,6 +15,7 @@ import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('terminalOutput') private terminalOutput!: ElementRef;
   @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
+  @ViewChild('chatHistorySidebar') private chatHistorySidebar?: ChatHistorySidebarComponent;
 
   messages: ChatMessage[] = [
     { role: 'assistant', content: 'Hello! I am your AI assistant. How can I help you today?', timestamp: new Date().toISOString() },
@@ -47,6 +49,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   
   // Sidebar properties
   sidebarOpen = true;
+  private isNewChat = false;
   
   // ASCII loading animations (kept for backward compatibility)
   private asciiLoadingFrames = [
@@ -430,6 +433,46 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   async sendMessage() {
     if (this.newMessage.trim()) {
+      // Create chat session if this is the first message and no chat exists
+      // OR if we have a temporary chat ID (starts with 'temp-')
+      const isTemporaryChat = this.currentChatId && this.currentChatId.startsWith('temp-');
+      const tempChatId = isTemporaryChat ? this.currentChatId : null;
+      
+      if (!this.currentChatId || isTemporaryChat) {
+        try {
+          // Generate a title from the first message (truncate if too long)
+          const messageContent = this.newMessage.trim();
+          const chatTitle = messageContent.length > 50 
+            ? messageContent.substring(0, 47) + '...' 
+            : messageContent;
+          
+          console.log('Creating new chat session for first message');
+          const chatResponse = await firstValueFrom(this.chatService.createChat(chatTitle, 'gpt-5-nano'));
+          this.currentChatId = chatResponse.id;
+          this.isNewChat = true;
+          
+          // Update the sidebar with the real chat
+          if (this.chatHistorySidebar) {
+            if (isTemporaryChat && tempChatId) {
+              // Replace the temporary chat with the real one
+              this.chatHistorySidebar.replaceTemporaryChat(tempChatId, chatResponse);
+            } else {
+              // Add the new chat to sidebar
+              this.chatHistorySidebar.addOrUpdateChat(chatResponse);
+            }
+          }
+          console.log('Created chat session:', chatResponse.id);
+        } catch (error) {
+          console.error('Failed to create chat session:', error);
+          // Continue without chat ID (messages won't be persisted)
+          // If we had a temporary chat, keep using it for UI purposes
+          if (!this.currentChatId) {
+            // Create a fallback temporary ID
+            this.currentChatId = 'temp-fallback-' + Date.now();
+          }
+        }
+      }
+      
       // Add to history
       this.messageHistory.unshift(this.newMessage);
       this.historyIndex = -1;
@@ -443,6 +486,12 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.addMessage(userMessage);
       const messageContent = this.newMessage;
       this.newMessage = '';
+
+      // Update chat title if this is a new chat
+      if (this.isNewChat && this.currentChatId) {
+        this.updateChatTitleFromFirstMessage(this.currentChatId, messageContent);
+        this.isNewChat = false;
+      }
       
       // Show typing indicator
       this.isTyping = true;
@@ -505,7 +554,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         chat_id: this.currentChatId || undefined,
         model: 'gpt-5-nano',
         stream: true,
-        use_rag: true,
+        use_rag: this.ragConfig.useRag,
         include_sources: true
       };
       
@@ -646,6 +695,42 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   /**
+   * Generate a chat title from the first message (mimics backend logic).
+   */
+  private generateChatTitleFromMessage(message: string): string {
+    if (message.length > 50) {
+      return message.substring(0, 50) + '...';
+    }
+    return message;
+  }
+
+  /**
+   * Update the chat title in the sidebar with a typewriter effect.
+   * Called when the first user message is sent.
+   */
+  private updateChatTitleFromFirstMessage(chatId: string, firstMessage: string): void {
+    if (!this.chatHistorySidebar) {
+      console.warn('Sidebar not available for title update');
+      return;
+    }
+    const title = this.generateChatTitleFromMessage(firstMessage);
+    // Ensure the chat exists in sidebar
+    const chat: ChatSession = {
+      id: chatId,
+      user_id: '', // unknown, but not needed for UI
+      title: 'New Chat', // placeholder
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      model_used: 'gpt-5-nano',
+      metadata: {},
+      message_count: 0
+    };
+    this.chatHistorySidebar.addOrUpdateChat(chat);
+    // Start animation
+    this.chatHistorySidebar.animateChatTitle(chatId, title, 50);
+  }
+
+  /**
    * Simulate typing with variable speed based on character type
    * Faster for common characters (letters, spaces), slower for punctuation and complex characters
    */
@@ -680,12 +765,29 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   private async createOrLoadChat() {
+    // Don't create a chat session on page load
+    // Chat session will be created when user sends their first message
+    console.log('Chat creation deferred until first message');
+    
+    // We'll still try to load the most recent chat for display purposes
     try {
-      const response = await firstValueFrom(this.chatService.createChat('New Chat', 'gpt-5-nano'));
-      this.currentChatId = response.id;
+      const chatsResponse = await firstValueFrom(this.chatService.getChats(1, 1));
+      if (chatsResponse.chats && chatsResponse.chats.length > 0) {
+        // Set the most recent chat as current for display, but don't load messages yet
+        // User can select a different chat from sidebar if they want
+        const mostRecentChat = chatsResponse.chats[0];
+        this.currentChatId = mostRecentChat.id;
+        this.isNewChat = false;
+        console.log('Most recent chat available:', mostRecentChat.id);
+      } else {
+        // No existing chats, we'll create one when user sends first message
+        this.currentChatId = null;
+        this.isNewChat = true;
+      }
     } catch (error) {
-      console.error('Error creating chat session:', error);
-      // Continue without chat ID (messages won't be persisted)
+      console.error('Error checking for existing chats:', error);
+      this.currentChatId = null;
+      this.isNewChat = true;
     }
   }
 
@@ -693,7 +795,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
    * Load more messages for lazy loading
    */
   private async loadMoreMessages() {
-    if (this.isLoadingMessages || !this.hasMoreMessages || !this.currentChatId) {
+    // Don't load messages for temporary chats (they don't exist on backend)
+    const isTemporaryChat = this.currentChatId && this.currentChatId.startsWith('temp-');
+    if (this.isLoadingMessages || !this.hasMoreMessages || !this.currentChatId || isTemporaryChat) {
       return;
     }
 
@@ -1023,7 +1127,27 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.hasMoreMessages = true;
     this.totalMessages = 0;
     
-    // Show loading state
+    // Check if this is a temporary chat (starts with 'temp-')
+    const isTemporaryChat = chatId.startsWith('temp-');
+    
+    if (isTemporaryChat) {
+      // Temporary chats don't have messages on the backend
+      console.log('Selected temporary chat, skipping message load');
+      this.isLoadingMessages = false;
+      
+      // Show a welcome message for new temporary chats
+      this.messages.push({
+        role: 'assistant',
+        content: `New chat session created. Type your first message to begin.`,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Scroll to bottom to show the message
+      setTimeout(() => this.scrollToBottom(), 100);
+      return;
+    }
+    
+    // Show loading state for real chats
     this.isLoadingMessages = true;
     
     try {
