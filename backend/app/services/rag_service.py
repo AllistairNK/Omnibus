@@ -417,7 +417,7 @@ Provide a balanced answer that:
             # Extract source information
             sources = []
             for doc in context_docs:
-                if doc.get("score", 0) >= 0.3:  # Include moderately relevant sources
+                if doc.get("score", 0) >= 0.1:  # Include moderately relevant sources
                     sources.append({
                         "document_id": doc.get("document_id"),
                         "chunk_index": doc.get("chunk_index"),
