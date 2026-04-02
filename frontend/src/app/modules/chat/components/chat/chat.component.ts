@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, OnDestroy, 
 import { ChatService, ChatMessage, ChatCompletionRequest, ChatSession } from '../../../../core/services/chat.service';
 import { CommandParserService, CommandResult } from '../../../../core/services/command-parser.service';
 import { AsciiEmotionService, EmotionType } from '../../../../core/services/ascii-emotion.service';
+import { NetworkService } from '../../../../core/services/network.service';
 import { Subscription, Subject, timer } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
@@ -44,6 +45,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   currentChatId: string | null = null;
   streamingResponse = '';
   private streamSubscription?: Subscription;
+  private networkSubscription?: Subscription;
   private currentStreamAbortController?: AbortController;
   protected isStreaming = false;
   
@@ -125,10 +127,20 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     smoothScrolling: true
   };
 
+  // Terminal Status Properties
+  terminalStatus = {
+    mode: 'RAG', // Will be updated based on ragConfig.useRag
+    model: 'gpt-5-nano', // Will be updated based on actual model used
+    totalTokens: 0, // Will be calculated from messages
+    connection: 'online', // online, offline, connecting
+    connectionStatusText: '● Online'
+  };
+
   constructor(
     private chatService: ChatService,
     private commandParser: CommandParserService,
     private asciiEmotionService: AsciiEmotionService,
+    private networkService: NetworkService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -146,6 +158,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     // Setup emotion subscriptions
     this.setupEmotionSubscriptions();
 
+    // Setup network status subscription
+    this.setupNetworkSubscription();
+
     // Initialize thinking frames
     this.thinkingFrames = this.asciiEmotionService.getThinkingIndicators();
 
@@ -154,6 +169,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     // Load initial messages
     this.loadMoreMessages();
+
+    // Initialize terminal status
+    this.updateTerminalStatus();
   }
 
   ngAfterViewChecked() {
@@ -178,6 +196,16 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     // Set initial emotion
     this.asciiEmotionService.setEmotion('neutral');
+  }
+
+  /**
+   * Setup network status subscription
+   */
+  private setupNetworkSubscription(): void {
+    this.networkSubscription = this.networkService.networkStatus$.subscribe(status => {
+      this.updateConnectionStatus();
+      this.cdr.detectChanges();
+    });
   }
 
   /**
@@ -319,6 +347,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.emotionSubscription.unsubscribe();
     }
     
+    // Clean up network subscription
+    if (this.networkSubscription) {
+      this.networkSubscription.unsubscribe();
+    }
+    
     // Clean up thinking animation
     this.stopThinkingAnimation();
     
@@ -393,6 +426,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     // Create a new array reference to trigger change detection
     this.messages = [...this.messages, message];
     
+    // Update terminal status (tokens, model, etc.)
+    this.updateTerminalStatus();
+    
     // Force change detection
     this.cdr.detectChanges();
     
@@ -412,6 +448,10 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     const newMessages = [...this.messages];
     newMessages[index] = message;
     this.messages = newMessages;
+    
+    // Update terminal status (tokens, model, etc.)
+    this.updateTerminalStatus();
+    
     this.cdr.detectChanges();
     
     if (this.viewport) {
@@ -817,6 +857,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       if (this.hasMoreMessages) {
         this.currentPage++;
       }
+      
+      // Update terminal status with newly loaded messages
+      this.updateTerminalStatus();
     } catch (error) {
       console.error('Error loading messages:', error);
     } finally {
@@ -1024,6 +1067,51 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     return text.substring(0, maxLength) + '...';
   }
 
+  // Terminal Status Methods
+  updateTerminalStatus(): void {
+    // Update mode based on RAG configuration
+    this.terminalStatus.mode = this.ragConfig.useRag ? 'RAG' : 'Direct';
+    
+    // Calculate total tokens from messages
+    this.terminalStatus.totalTokens = this.calculateTotalTokens();
+    
+    // Update model from the most recent message that has a model
+    const lastMessageWithModel = [...this.messages].reverse().find(msg => msg.model);
+    if (lastMessageWithModel?.model) {
+      this.terminalStatus.model = lastMessageWithModel.model;
+    }
+    
+    // Update connection status
+    this.updateConnectionStatus();
+  }
+
+  calculateTotalTokens(): number {
+    let total = 0;
+    for (const message of this.messages) {
+      // Use tokens_used if available (from backend)
+      if (message.tokens_used) {
+        total += message.tokens_used;
+      } else {
+        // Estimate tokens based on content length (rough approximation)
+        // Average of 4 characters per token for English text
+        const estimatedTokens = Math.ceil(message.content.length / 4);
+        total += estimatedTokens;
+      }
+    }
+    return total;
+  }
+
+  updateConnectionStatus(): void {
+    const isOnline = this.networkService.getCurrentStatus().online;
+    if (isOnline) {
+      this.terminalStatus.connection = 'online';
+      this.terminalStatus.connectionStatusText = '● Online';
+    } else {
+      this.terminalStatus.connection = 'offline';
+      this.terminalStatus.connectionStatusText = '○ Offline';
+    }
+  }
+
   // RAG Configuration methods
   toggleRagSettings(): void {
     this.showRagSettings = !this.showRagSettings;
@@ -1035,6 +1123,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     localStorage.setItem('ragConfig', JSON.stringify(this.ragConfig));
     alert('RAG settings saved!');
     this.showRagSettings = false;
+    // Update terminal status to reflect RAG mode change
+    this.updateTerminalStatus();
   }
 
   resetRagSettings(): void {
@@ -1047,6 +1137,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       highlightMatches: true
     };
     console.log('RAG settings reset to defaults');
+    // Update terminal status to reflect RAG mode change
+    this.updateTerminalStatus();
   }
 
   loadRagSettings(): void {
@@ -1142,6 +1234,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
         timestamp: new Date().toISOString()
       });
       
+      // Update terminal status with the new message
+      this.updateTerminalStatus();
+      
       // Scroll to bottom to show the message
       setTimeout(() => this.scrollToBottom(), 100);
       return;
@@ -1182,6 +1277,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       // Scroll to bottom to show latest messages
       setTimeout(() => this.scrollToBottom(), 100);
       
+      // Update terminal status with loaded messages
+      this.updateTerminalStatus();
+      
     } catch (error) {
       console.error('Error loading chat messages:', error);
       // Fallback to demo messages
@@ -1192,6 +1290,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
           timestamp: new Date().toISOString() 
         }
       ];
+      
+      // Update terminal status with fallback messages
+      this.updateTerminalStatus();
     } finally {
       this.isLoadingMessages = false;
     }

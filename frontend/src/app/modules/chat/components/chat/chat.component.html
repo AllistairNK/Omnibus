@@ -165,10 +165,16 @@
 
   <!-- Terminal Status Bar -->
   <div class="terminal-status">
-    <span class="status-item">Mode: <span class="status-value">RAG</span></span>
-    <span class="status-item">Model: <span class="status-value">gpt-5-nano</span></span>
-    <span class="status-item">Tokens: <span class="status-value">{{ messages.length * 42 }}</span></span>
-    <span class="status-item">Connection: <span class="status-value online">● Online</span></span>
+    <span class="status-item">Mode: <span class="status-value">{{ terminalStatus.mode }}</span></span>
+    <span class="status-item">Model: <span class="status-value">{{ terminalStatus.model }}</span></span>
+    <span class="status-item">Tokens: <span class="status-value">{{ terminalStatus.totalTokens | number }}</span></span>
+    <span class="status-item">Connection: 
+      <span class="status-value" [class.online]="terminalStatus.connection === 'online'" 
+                                [class.offline]="terminalStatus.connection === 'offline'"
+                                [class.connecting]="terminalStatus.connection === 'connecting'">
+        {{ terminalStatus.connectionStatusText }}
+      </span>
+    </span>
     <span class="status-item settings-toggle" (click)="toggleRagSettings()">
       ⚙️ RAG Settings
     </span>
