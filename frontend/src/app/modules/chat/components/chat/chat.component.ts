@@ -3,6 +3,7 @@ import { ChatService, ChatMessage, ChatCompletionRequest, ChatSession } from '..
 import { CommandParserService, CommandResult } from '../../../../core/services/command-parser.service';
 import { AsciiEmotionService, EmotionType } from '../../../../core/services/ascii-emotion.service';
 import { NetworkService } from '../../../../core/services/network.service';
+import { AuthStatusService, AuthStatus } from '../../../../core/services/auth-status.service';
 import { Subscription, Subject, timer } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
@@ -46,6 +47,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   streamingResponse = '';
   private streamSubscription?: Subscription;
   private networkSubscription?: Subscription;
+  private authStatusSubscription?: Subscription;
   private currentStreamAbortController?: AbortController;
   protected isStreaming = false;
   
@@ -92,6 +94,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   emotionTransitionProgress = 0;
   isEmotionTransitioning = false;
   currentAsciiFrame = '';
+  isAnimationRunning = true;
   private emotionSubscription?: Subscription;
   
   // Animated thinking indicators
@@ -141,6 +144,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     private commandParser: CommandParserService,
     private asciiEmotionService: AsciiEmotionService,
     private networkService: NetworkService,
+    private authStatusService: AuthStatusService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -158,8 +162,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     // Setup emotion subscriptions
     this.setupEmotionSubscriptions();
 
-    // Setup network status subscription
-    this.setupNetworkSubscription();
+    // Setup network and auth status subscriptions
+    this.setupStatusSubscriptions();
 
     // Initialize thinking frames
     this.thinkingFrames = this.asciiEmotionService.getThinkingIndicators();
@@ -194,15 +198,26 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.currentAsciiFrame = frame;
     });
 
+    // Subscribe to animation running state
+    this.asciiEmotionService.isAnimationRunning().subscribe(running => {
+      this.isAnimationRunning = running;
+    });
+
     // Set initial emotion
     this.asciiEmotionService.setEmotion('neutral');
   }
 
   /**
-   * Setup network status subscription
+   * Setup network and auth status subscriptions
    */
-  private setupNetworkSubscription(): void {
+  private setupStatusSubscriptions(): void {
+    // Network status subscription
     this.networkSubscription = this.networkService.networkStatus$.subscribe(status => {
+      this.updateConnectionStatus();
+      this.cdr.detectChanges();
+    });
+    // Auth status subscription
+    this.authStatusSubscription = this.authStatusService.authStatus$.subscribe(authStatus => {
       this.updateConnectionStatus();
       this.cdr.detectChanges();
     });
@@ -236,6 +251,27 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
    */
   setEmotion(emotion: EmotionType, transitionDuration: number = 500): void {
     this.asciiEmotionService.setEmotion(emotion, transitionDuration);
+  }
+
+  /**
+   * Set a random emotion
+   */
+  setRandomEmotion(): void {
+    const emotions: EmotionType[] = [
+      'neutral', 'happy', 'thinking', 'confused', 
+      'excited', 'sad', 'loading', 'success', 'error'
+    ];
+    // Filter out current emotion to ensure we get a different one
+    const availableEmotions = emotions.filter(emotion => emotion !== this.currentEmotion);
+    const randomEmotion = availableEmotions[Math.floor(Math.random() * availableEmotions.length)];
+    this.asciiEmotionService.setEmotion(randomEmotion, 300);
+  }
+
+  /**
+   * Toggle animation loop
+   */
+  toggleAnimation(): void {
+    this.asciiEmotionService.toggleAnimation();
   }
 
   /**
@@ -350,6 +386,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     // Clean up network subscription
     if (this.networkSubscription) {
       this.networkSubscription.unsubscribe();
+    }
+    
+    // Clean up auth status subscription
+    if (this.authStatusSubscription) {
+      this.authStatusSubscription.unsubscribe();
     }
     
     // Clean up thinking animation
@@ -1103,12 +1144,33 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   updateConnectionStatus(): void {
     const isOnline = this.networkService.getCurrentStatus().online;
-    if (isOnline) {
-      this.terminalStatus.connection = 'online';
-      this.terminalStatus.connectionStatusText = '● Online';
-    } else {
+    const authStatus = this.authStatusService.getCurrentStatus();
+    
+    if (!isOnline) {
       this.terminalStatus.connection = 'offline';
       this.terminalStatus.connectionStatusText = '○ Offline';
+      return;
+    }
+    
+    // Network is online, check auth status
+    switch (authStatus) {
+      case 'invalid':
+        this.terminalStatus.connection = 'token_invalid';
+        this.terminalStatus.connectionStatusText = '⚠ Invalid Token';
+        break;
+      case 'expired':
+        this.terminalStatus.connection = 'token_expired';
+        this.terminalStatus.connectionStatusText = '⚠ Token Expired';
+        break;
+      case 'unknown':
+        // No token present, but network is online
+        this.terminalStatus.connection = 'online';
+        this.terminalStatus.connectionStatusText = '● Online (No Auth)';
+        break;
+      default: // 'valid' or any other
+        this.terminalStatus.connection = 'online';
+        this.terminalStatus.connectionStatusText = '● Online';
+        break;
     }
   }
 
