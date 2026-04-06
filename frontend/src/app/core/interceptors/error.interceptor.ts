@@ -2,13 +2,22 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { AuthStatusService } from '../services/auth-status.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
+  const authStatusService = inject(AuthStatusService);
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
-        // Unauthorized - redirect to login
+        // Unauthorized - token invalid or expired
+        const detail = error.error?.detail || '';
+        if (detail.includes('expired')) {
+          authStatusService.markExpired();
+        } else {
+          authStatusService.markInvalid();
+        }
+        // Redirect to login
         router.navigate(['/auth/login']);
       } else if (error.status === 403) {
         // Forbidden

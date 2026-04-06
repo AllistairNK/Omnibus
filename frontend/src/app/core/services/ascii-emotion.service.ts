@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, interval, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, interval, Subscription, combineLatest } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 
 export type EmotionType = 
@@ -41,9 +41,14 @@ export class AsciiEmotionService {
   
   private activeAnimation: Subscription | null = null;
   private transitionInterval: Subscription | null = null;
+  private currentFrameIndex = 0;
+  private frameIndexSubject = new BehaviorSubject<number>(0);
+  private animationRunningSubject = new BehaviorSubject<boolean>(true);
 
   constructor() {
     this.initializeEmotionLibrary();
+    // Start animation for initial neutral emotion
+    setTimeout(() => this.startAnimation(), 100);
   }
 
   /**
@@ -55,8 +60,6 @@ export class AsciiEmotionService {
       frames: [
         `
         ( •_•)
-        ( •_•)>⌐■-■
-        (⌐■_■)
         `
       ],
       frameRate: 1000,
@@ -68,17 +71,11 @@ export class AsciiEmotionService {
       frames: [
         `
         (^_^)
-        (^_^)b
-        (^_^)/
         `,
         `
-        (^_^)
         (^_^)b
-        (^_^)/
         `,
         `
-        (^_^)
-        (^_^)b
         (^_^)/
         `
       ],
@@ -91,17 +88,11 @@ export class AsciiEmotionService {
       frames: [
         `
         (•_•)
-        (•_•)⌐■-■
-        (⌐■_■)
         `,
         `
-        (•_•)
         (•_•)⌐■-■
-        (⌐■_■) 
         `,
         `
-        (•_•)
-        (•_•)⌐■-■
         (⌐■_■)  
         `
       ],
@@ -114,12 +105,11 @@ export class AsciiEmotionService {
       frames: [
         `
         (⊙_☉)
-        (⊙_☉)?
-        (⊙_☉)???
         `,
         `
-        (⊙_☉)
         (⊙_☉)?
+        `,
+        `
         (⊙_☉)???
         `
       ],
@@ -132,12 +122,11 @@ export class AsciiEmotionService {
       frames: [
         `
         (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧
-        (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ ✧ﾟ･: *ヽ(◕ヮ◕ヽ)
-        (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧
         `,
         `
-        (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧
         (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ ✧ﾟ･: *ヽ(◕ヮ◕ヽ)
+        `,
+        `
         (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧
         `
       ],
@@ -150,12 +139,11 @@ export class AsciiEmotionService {
       frames: [
         `
         (︶︹︶)
-        (︶︹︶)...
-        (︶︹︶)....
         `,
         `
-        (︶︹︶)
         (︶︹︶)...
+        `,
+        `
         (︶︹︶)....
         `
       ],
@@ -186,12 +174,16 @@ export class AsciiEmotionService {
       frames: [
         `
         (•̀ᴗ•́)و ̑̑
+        `,
+        `
         (•̀ᴗ•́)و ̑̑ ✓
+        `,
+        `
         (•̀ᴗ•́)و ̑̑ ✓ Done!
         `
       ],
       frameRate: 500,
-      loop: false
+      loop: true
     });
 
     // Error emotion
@@ -199,12 +191,16 @@ export class AsciiEmotionService {
       frames: [
         `
         (×_×)
+        `,
+        `
         (×_×)⌐■-■
+        `,
+        `
         (⌐■_■) Error!
         `
       ],
       frameRate: 500,
-      loop: false
+      loop: true
     });
   }
 
@@ -220,6 +216,38 @@ export class AsciiEmotionService {
    */
   getEmotionState(): Observable<EmotionState> {
     return this.emotionStateSubject.asObservable();
+  }
+
+  /**
+   * Get animation running state
+   */
+  isAnimationRunning(): Observable<boolean> {
+    return this.animationRunningSubject.asObservable();
+  }
+
+  /**
+   * Toggle animation on/off
+   */
+  toggleAnimation(): void {
+    if (this.animationRunningSubject.value) {
+      this.stopAnimation();
+    } else {
+      this.startAnimation();
+    }
+  }
+
+  /**
+   * Pause animation (alias for stopAnimation)
+   */
+  pauseAnimation(): void {
+    this.stopAnimation();
+  }
+
+  /**
+   * Resume animation (alias for startAnimation)
+   */
+  resumeAnimation(): void {
+    this.startAnimation();
   }
 
   /**
@@ -271,6 +299,8 @@ export class AsciiEmotionService {
           isTransitioning: false
         });
         this.currentEmotionSubject.next(emotion);
+        // Start animation for the new emotion if it has multiple frames
+        this.startAnimation();
       }
     });
   }
@@ -286,8 +316,11 @@ export class AsciiEmotionService {
    * Get current frame of ASCII art for the current emotion
    */
   getCurrentFrame(): Observable<string> {
-    return this.getEmotionState().pipe(
-      map(state => {
+    return combineLatest([
+      this.getEmotionState(),
+      this.frameIndexSubject
+    ]).pipe(
+      map(([state, frameIndex]) => {
         const art = this.emotionLibrary.get(state.currentEmotion);
         if (!art || art.frames.length === 0) {
           return '';
@@ -303,10 +336,27 @@ export class AsciiEmotionService {
           }
         }
         
-        // Return current frame (for animated emotions, we'd need to handle frame index)
-        return art.frames[0];
+        // Return current frame - use frame index for animated emotions
+        let effectiveFrameIndex = 0;
+        if (art.frames.length > 1 && art.loop) {
+          effectiveFrameIndex = frameIndex % art.frames.length;
+        }
+        return art.frames[effectiveFrameIndex];
       })
     );
+  }
+
+  /**
+   * Get current frame index for an emotion
+   */
+  private getCurrentFrameIndex(emotion: EmotionType): number {
+    const art = this.emotionLibrary.get(emotion);
+    if (!art || art.frames.length <= 1 || !art.loop) {
+      return 0;
+    }
+    
+    // Return current frame index for looping animations
+    return this.frameIndexSubject.value;
   }
 
   /**
@@ -328,15 +378,19 @@ export class AsciiEmotionService {
     const art = this.emotionLibrary.get(currentEmotion);
     
     if (!art || art.frames.length <= 1 || !art.loop) {
+      this.frameIndexSubject.next(0);
+      this.animationRunningSubject.next(false);
       return;
     }
 
-    let frameIndex = 0;
+    this.currentFrameIndex = 0;
+    this.frameIndexSubject.next(0);
+    
     this.activeAnimation = interval(art.frameRate).subscribe(() => {
-      frameIndex = (frameIndex + 1) % art.frames.length;
-      // For now, we just update the frame index
-      // In a real implementation, we'd emit the current frame
+      this.currentFrameIndex = (this.currentFrameIndex + 1) % art.frames.length;
+      this.frameIndexSubject.next(this.currentFrameIndex);
     });
+    this.animationRunningSubject.next(true);
   }
 
   /**
@@ -347,6 +401,9 @@ export class AsciiEmotionService {
       this.activeAnimation.unsubscribe();
       this.activeAnimation = null;
     }
+    this.frameIndexSubject.next(0);
+    this.currentFrameIndex = 0;
+    this.animationRunningSubject.next(false);
   }
 
   /**

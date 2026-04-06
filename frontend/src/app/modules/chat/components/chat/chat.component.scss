@@ -329,6 +329,24 @@ app-chat-history-sidebar {
   color: #00ff00;
 }
 
+.offline {
+  color: #ff5555;
+}
+
+.connecting {
+  color: #ffaa00;
+}
+
+.token-invalid {
+  color: #ff5555;
+  animation: pulse 1.5s infinite;
+}
+
+.token-expired {
+  color: #ffaa00;
+  animation: pulse 2s infinite;
+}
+
 /* Scrollbar Styling */
 .terminal-output::-webkit-scrollbar {
   width: 10px;
@@ -1065,6 +1083,55 @@ app-chat-history-sidebar {
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.4); }
   50% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.7); }
+}
+
+/* Random emotion button */
+.emotion-btn.random-btn {
+  background: linear-gradient(135deg, #222, #444);
+  color: #ffcc00;
+  border: 1px solid #ff9900;
+  animation: random-pulse 3s infinite;
+}
+
+.emotion-btn.random-btn:hover {
+  background: linear-gradient(135deg, #333, #555);
+  color: #ffff00;
+  border-color: #ffcc00;
+  animation: random-pulse-fast 1.5s infinite;
+  box-shadow: 0 4px 12px rgba(255, 204, 0, 0.4);
+}
+
+@keyframes random-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 204, 0, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(255, 204, 0, 0.6); }
+}
+
+@keyframes random-pulse-fast {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 204, 0, 0.4); }
+  50% { box-shadow: 0 0 15px rgba(255, 204, 0, 0.8); }
+}
+
+/* Animation toggle button */
+.emotion-btn.animation-toggle-btn {
+  background: linear-gradient(135deg, #222, #2a2a5a);
+  color: #55aaff;
+  border: 1px solid #5555ff;
+  animation: none;
+}
+
+.emotion-btn.animation-toggle-btn:hover {
+  background: linear-gradient(135deg, #333, #3a3a7a);
+  color: #88ccff;
+  border-color: #8888ff;
+  box-shadow: 0 4px 12px rgba(85, 170, 255, 0.4);
+}
+
+.emotion-btn.animation-toggle-btn.active {
+  background: linear-gradient(135deg, #005500, #008800);
+  color: #00ff00;
+  border-color: #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+  animation: pulse-glow 2s infinite;
 }
 
 /* Animated thinking indicators */

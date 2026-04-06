@@ -42,6 +42,10 @@
       <button class="emotion-btn" (click)="setEmotion('thinking')" [class.active]="currentEmotion === 'thinking'">🤔 Thinking</button>
       <button class="emotion-btn" (click)="setEmotion('confused')" [class.active]="currentEmotion === 'confused'">😕 Confused</button>
       <button class="emotion-btn" (click)="setEmotion('neutral')" [class.active]="currentEmotion === 'neutral'">😐 Neutral</button>
+      <button class="emotion-btn random-btn" (click)="setRandomEmotion()">🎲 Random</button>
+      <button class="emotion-btn animation-toggle-btn" (click)="toggleAnimation()" [class.active]="isAnimationRunning">
+        {{ isAnimationRunning ? '⏸️ Pause' : '▶️ Play' }}
+      </button>
     </div>
   </div>
 
@@ -171,7 +175,9 @@
     <span class="status-item">Connection: 
       <span class="status-value" [class.online]="terminalStatus.connection === 'online'" 
                                 [class.offline]="terminalStatus.connection === 'offline'"
-                                [class.connecting]="terminalStatus.connection === 'connecting'">
+                                [class.connecting]="terminalStatus.connection === 'connecting'"
+                                [class.token-invalid]="terminalStatus.connection === 'token_invalid'"
+                                [class.token-expired]="terminalStatus.connection === 'token_expired'">
         {{ terminalStatus.connectionStatusText }}
       </span>
     </span>
