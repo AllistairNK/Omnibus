@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import * as AuthActions from '../state/auth/auth.actions';
+import { AuthStatusService } from './auth-status.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,8 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private store: Store
+    private store: Store,
+    private authStatusService: AuthStatusService
   ) { }
 
   login(email: string, password: string): Observable<any> {
@@ -25,6 +27,7 @@ export class AuthService {
           this.setToken(response.access_token);         // was response.token
           this.setUser(response.user);
           this.isAuthenticatedSubject.next(true);
+          this.authStatusService.markValid();
           this.store.dispatch(AuthActions.loginSuccess({
             token: response.access_token,
             user: response.user
@@ -41,6 +44,7 @@ export class AuthService {
     this.setToken(dummyToken);
     this.setUser(dummyUser);
     this.isAuthenticatedSubject.next(true);
+    this.authStatusService.markValid();
     // Update NgRx store state
     this.store.dispatch(AuthActions.loginSuccess({
       token: dummyToken,
@@ -57,6 +61,7 @@ export class AuthService {
           this.setToken(response.access_token);
           this.setUser(response.user);
           this.isAuthenticatedSubject.next(true);
+          this.authStatusService.markValid();
           this.store.dispatch(AuthActions.loginSuccess({
             token: response.access_token,
             user: response.user
@@ -73,6 +78,7 @@ export class AuthService {
         this.removeToken();
         this.removeUser();
         this.isAuthenticatedSubject.next(false);
+        this.authStatusService.reset();
         // Update NgRx store state
         this.store.dispatch(AuthActions.logout());
       }),
@@ -81,6 +87,7 @@ export class AuthService {
         this.removeToken();
         this.removeUser();
         this.isAuthenticatedSubject.next(false);
+        this.authStatusService.reset();
         this.store.dispatch(AuthActions.logout());
         return of(null);
       })
