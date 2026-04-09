@@ -114,7 +114,7 @@ html, body {
   font-family: 'Courier New', monospace;
   background-color: var(--background-primary);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  //transition: background-color 0.3s ease, color 0.3s ease;
   width: 100%;
 }
 
@@ -135,7 +135,7 @@ a:hover {
 
 // Enhanced interactive elements
 button, .btn, .mat-button {
-  transition: all 0.2s ease-in-out;
+  //transition: all 0.2s ease-in-out;
 }
 
 button:hover, .btn:hover, .mat-button:hover {
@@ -162,7 +162,7 @@ button:active, .btn:active, .mat-button:active {
 
 // List item hover effects
 .list-item, .mat-list-item, .menu-item {
-  transition: background-color 0.2s ease;
+  //transition: background-color 0.2s ease;
 }
 
 .list-item:hover, .mat-list-item:hover, .menu-item:hover {
