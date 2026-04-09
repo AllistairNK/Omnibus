@@ -2,8 +2,8 @@
 /* Enhanced with Task 6.1: Real-time Chat Interface */
 .terminal-container {
   font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
-  background: #0a0a0a;
-  color: #00ff00;
+  background: var(--background-primary);
+  color: var(--text-primary);
   min-height: 100vh;
   padding: 20px;
   display: flex;
@@ -44,7 +44,7 @@ app-chat-history-sidebar {
 }
 
 .ascii-text {
-  color: #00cc00;
+  color: var(--text-secondary);
   font-size: 10px;
   line-height: 1.2;
   margin: 0;
@@ -57,7 +57,7 @@ app-chat-history-sidebar {
 .terminal-header {
   margin-top: 10px;
   font-size: 14px;
-  color: #00ff88;
+  color: var(--text-accent);
 }
 
 .prompt-symbol {
@@ -76,8 +76,8 @@ app-chat-history-sidebar {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #000000;
-  border: 2px solid #333;
+  background: var(--input-background);
+  border: 2px solid var(--border-secondary);
   border-radius: 4px;
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
@@ -88,8 +88,8 @@ app-chat-history-sidebar {
   flex: 1;
   padding: 20px;
   overflow-y: hidden; /* Changed from auto to hidden - let virtual scroll handle scrolling */
-  background: #000000;
-  border-bottom: 1px solid #333;
+  background: var(--input-background);
+  border-bottom: 1px solid var(--border-secondary);
   display: flex;
   flex-direction: column;
 }
@@ -103,14 +103,14 @@ app-chat-history-sidebar {
 }
 
 .prompt {
-  color: #00ff00;
+  color: var(--text-primary);
   font-weight: bold;
   margin-right: 10px;
   user-select: none;
 }
 
 .user-prompt {
-  color: #00ff00;
+  color: var(--text-primary);
   font-weight: bold;
 }
 
@@ -120,7 +120,7 @@ app-chat-history-sidebar {
 }
 
 .message-content {
-  color: #ffffff;
+  color: var(--text-primary);
   margin-left: 10px;
   word-break: break-word;
   padding: 8px 12px;

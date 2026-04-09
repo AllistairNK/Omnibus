@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #0a0a0a;
-  color: #00ff00;
+  background-color: var(--background-primary);
+  color: var(--text-primary);
   font-family: 'Courier New', monospace;
   width: 100%;
   max-width: 100%;
@@ -15,8 +15,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  border-bottom: 2px solid #00ff00;
-  background-color: #111111;
+  border-bottom: 2px solid var(--border-primary);
+  background-color: var(--background-secondary);
 }
 
 .header-left {
@@ -32,7 +32,7 @@
 }
 
 .ascii-art {
-  color: #00ffcc;
+  color: var(--text-accent);
   max-width: 100%;
   overflow: hidden;
 }
@@ -62,11 +62,11 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background-color: #00ff00;
+  background-color: var(--accent-primary);
 }
 
 .status-indicator.online {
-  background-color: #00ff00;
+  background-color: var(--accent-primary);
 }
 
 .status-text {
@@ -92,7 +92,7 @@
 }
 
 .terminal-nav a {
-  color: #00ff00;
+  color: var(--text-primary);
   text-decoration: none;
   padding: 0.5rem 1rem;
   border: 1px solid transparent;
@@ -103,21 +103,21 @@
 }
 
 .terminal-nav a:hover {
-  border-color: #00ff00;
-  background-color: rgba(0, 255, 0, 0.15);
+  border-color: var(--border-primary);
+  background-color: color-mix(in srgb, var(--accent-primary) 15%, transparent);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 255, 0, 0.2);
+  box-shadow: 0 4px 8px var(--card-shadow);
 }
 
 .terminal-nav a:active {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 255, 0, 0.1);
+  box-shadow: 0 2px 4px var(--card-shadow);
 }
 
 .terminal-nav a.active {
-  background-color: rgba(0, 255, 0, 0.25);
-  border-color: #00ff00;
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  background-color: color-mix(in srgb, var(--accent-primary) 25%, transparent);
+  border-color: var(--border-primary);
+  box-shadow: 0 0 10px var(--card-shadow);
 }
 
 .terminal-nav a.active::after {
@@ -127,7 +127,7 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #00ff00;
+  background-color: var(--accent-primary);
   animation: pulse 2s infinite;
 }
 
@@ -148,7 +148,7 @@
 }
 
 .header-controls button {
-  color: #00ff00;
+  color: var(--text-primary);
   text-decoration: none;
   padding: 0.5rem 1rem;
   border: 1px solid transparent;
@@ -163,15 +163,15 @@
 }
 
 .header-controls button:hover {
-  border-color: #00ff00;
-  background-color: rgba(0, 255, 0, 0.15);
+  border-color: var(--border-primary);
+  background-color: color-mix(in srgb, var(--accent-primary) 15%, transparent);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 255, 0, 0.2);
+  box-shadow: 0 4px 8px var(--card-shadow);
 }
 
 .header-controls button:active {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 255, 0, 0.1);
+  box-shadow: 0 2px 4px var(--card-shadow);
 }
 
 .terminal-main {
@@ -187,8 +187,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  border-top: 2px solid #00ff00;
-  background-color: #111111;
+  border-top: 2px solid var(--border-primary);
+  background-color: var(--background-secondary);
   font-size: 0.9rem;
 }
 
@@ -199,12 +199,12 @@
 }
 
 .command-prompt {
-  color: #00ffcc;
+  color: var(--text-accent);
   font-weight: bold;
 }
 
 .current-route {
-  color: #00ff00;
+  color: var(--text-primary);
 }
 
 .footer-right {
@@ -218,7 +218,7 @@
 }
 
 .version {
-  color: #00ffcc;
+  color: var(--text-accent);
 }
 
 @keyframes blink {

@@ -1,12 +1,12 @@
 /* Chat History Sidebar - Task 6.1 */
 .chat-history-sidebar {
   font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
-  background: #111111;
-  border-right: 1px solid #333;
+  background: var(--background-secondary);
+  border-right: 1px solid var(--border-secondary);
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
+  transition: width 0.3s ease, min-width 0.3s ease;
   overflow: hidden;
 }
 
@@ -32,8 +32,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 15px 20px;
-  border-bottom: 1px solid #333;
-  background: #0a0a0a;
+  border-bottom: 1px solid var(--border-secondary);
+  background: var(--background-primary);
 }
 
 .header-actions {
@@ -43,7 +43,7 @@
 }
 
 .sidebar-title {
-  color: #00ff00;
+  color: var(--text-primary);
   font-size: 16px;
   margin: 0;
   display: flex;
@@ -56,9 +56,9 @@
 }
 
 .toggle-button {
-  background: #222;
-  color: #00ff00;
-  border: 1px solid #333;
+  background: var(--background-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
   border-radius: 4px;
   width: 30px;
   height: 30px;
@@ -68,12 +68,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .toggle-button:hover {
-  background: #333;
-  border-color: #00ff00;
+  background: var(--button-hover);
+  border-color: var(--border-primary);
 }
 
 .refresh-button {
@@ -205,13 +205,13 @@
 }
 
 .chat-item {
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--card-background);
+  border: 1px solid var(--border-secondary);
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .chat-item:hover {
@@ -234,7 +234,7 @@
 }
 
 .chat-title {
-  color: #fff;
+  color: var(--text-primary);
   font-weight: bold;
   font-size: 14px;
   white-space: nowrap;
