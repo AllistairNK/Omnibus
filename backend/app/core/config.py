@@ -75,6 +75,14 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 100
     ALLOWED_FILE_TYPES: List[str] = ["pdf", "txt", "docx", "md"]
 
+    # Monitoring & Analytics
+    SENTRY_DSN: Optional[str] = None
+    SENTRY_ENVIRONMENT: str = "development"
+    SENTRY_TRACES_SAMPLE_RATE: float = 1.0
+    SENTRY_PROFILES_SAMPLE_RATE: float = 1.0
+    ENABLE_PERFORMANCE_MONITORING: bool = True
+    METRICS_ENDPOINT_ENABLED: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

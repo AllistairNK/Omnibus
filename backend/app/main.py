@@ -8,12 +8,16 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware, AuthenticationMiddleware
+from app.core.monitoring import configure_sentry
 
 
 def create_application() -> FastAPI:
     """Create and configure FastAPI application."""
     # Configure logging before app creation
     configure_logging()
+    
+    # Configure Sentry for error tracking and monitoring
+    configure_sentry()
 
     app = FastAPI(
         title=settings.PROJECT_NAME,

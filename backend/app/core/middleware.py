@@ -15,6 +15,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from app.core.config import settings
+from app.services.analytics_service import analytics_service
 
 
 class PerformanceMetrics:
@@ -125,6 +126,33 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         # Record performance metrics
         endpoint = f"{request.method} {request.url.path}"
         performance_metrics.record_request(endpoint, process_time, response.status_code)
+
+        # Track analytics (async fire-and-forget)
+        try:
+            # Extract user ID from request if available
+            user_id = None
+            if hasattr(request.state, 'user') and request.state.user:
+                user_id = request.state.user.get('id')
+            elif 'Authorization' in request.headers:
+                # Try to extract from auth header
+                auth_header = request.headers.get('Authorization', '')
+                if auth_header.startswith('Bearer '):
+                    # In a real implementation, you would decode the JWT
+                    # For now, we'll just track as authenticated user
+                    user_id = 'authenticated'
+            
+            # Track request in analytics service
+            import asyncio
+            asyncio.create_task(
+                analytics_service.track_request(
+                    user_id=user_id,
+                    endpoint=request.url.path,
+                    duration=process_time,
+                    status_code=response.status_code
+                )
+            )
+        except Exception as e:
+            logger.warning(f"Failed to track analytics: {e}")
 
         # Add performance headers
         response.headers["X-Process-Time"] = str(process_time)
