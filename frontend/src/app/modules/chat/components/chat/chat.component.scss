@@ -214,8 +214,8 @@ app-chat-history-sidebar {
 /* Terminal Input Area */
 .terminal-input {
   padding: 15px 20px;
-  background: #111111;
-  border-top: 1px solid #333;
+  background: var(--background-secondary);
+  border-top: 1px solid var(--border-secondary);
 }
 
 .input-line {
@@ -229,7 +229,7 @@ app-chat-history-sidebar {
   flex: 1;
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: var(--text-primary);
   font-family: 'Courier New', monospace;
   font-size: 14px;
   padding: 8px 10px;
@@ -241,13 +241,13 @@ app-chat-history-sidebar {
 }
 
 .terminal-input-field:focus {
-  background: #1a1a1a;
+  background: var(--background-tertiary);
 }
 
 .send-button {
-  background: #003300;
-  color: #00ff00;
-  border: 1px solid #00cc00;
+  background: var(--button-background);
+  color: var(--text-primary);
+  border: 1px solid var(--accent-primary);
   border-radius: 4px;
   padding: 8px 15px;
   margin-left: 10px;
@@ -258,8 +258,8 @@ app-chat-history-sidebar {
 }
 
 .send-button:hover {
-  background: #005500;
-  border-color: #00ff00;
+  background: var(--button-hover);
+  border-color: var(--accent-primary);
 }
 
 .send-icon {
@@ -267,9 +267,9 @@ app-chat-history-sidebar {
 }
 
 .stop-button {
-  background: #330000;
-  color: #ff0000;
-  border: 1px solid #cc0000;
+  background: var(--button-error-background);
+  color: var(--accent-error);
+  border: 1px solid var(--accent-error);
   border-radius: 4px;
   padding: 8px 15px;
   margin-left: 10px;
@@ -280,8 +280,8 @@ app-chat-history-sidebar {
 }
 
 .stop-button:hover {
-  background: #550000;
-  border-color: #ff0000;
+  background: var(--button-error-hover);
+  border-color: var(--accent-error);
 }
 
 .stop-icon {
@@ -310,8 +310,8 @@ app-chat-history-sidebar {
   display: flex;
   justify-content: space-between;
   padding: 10px 20px;
-  background: #111111;
-  border-top: 1px solid #333;
+  background: var(--background-secondary);
+  border-top: 1px solid var(--border-secondary);
   margin-top: 20px;
   font-size: 12px;
 }
@@ -321,29 +321,29 @@ app-chat-history-sidebar {
 }
 
 .status-value {
-  color: #00ff00;
+  color: var(--text-primary);
   font-weight: bold;
 }
 
 .online {
-  color: #00ff00;
+  color: var(--accent-success);
 }
 
 .offline {
-  color: #ff5555;
+  color: var(--accent-error);
 }
 
 .connecting {
-  color: #ffaa00;
+  color: var(--accent-warning);
 }
 
 .token-invalid {
-  color: #ff5555;
+  color: var(--accent-error);
   animation: pulse 1.5s infinite;
 }
 
 .token-expired {
-  color: #ffaa00;
+  color: var(--accent-warning);
   animation: pulse 2s infinite;
 }
 
@@ -751,10 +751,10 @@ app-chat-history-sidebar {
 /* RAG Configuration Panel - Task 7.1 */
 .settings-toggle {
   cursor: pointer;
-  color: #00aaff;
+  color: var(--accent-secondary);
   margin-left: 15px;
   padding: 2px 8px;
-  border: 1px solid #00aaff;
+  border: 1px solid var(--accent-secondary);
   border-radius: 4px;
   transition: all 0.2s;
 }
@@ -765,11 +765,11 @@ app-chat-history-sidebar {
 
 .rag-settings-panel {
   position: absolute;
-  bottom: 50px;
+  bottom: 5px;
   right: 20px;
   width: 400px;
-  background: #0a0a0a;
-  border: 2px solid #00aa55;
+  background: var(--background-primary);
+  border: 2px solid var(--accent-success);
   border-radius: 8px;
   z-index: 100;
   box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
@@ -780,20 +780,20 @@ app-chat-history-sidebar {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: #003300;
-  border-bottom: 1px solid #00aa55;
+  background: var(--button-background);
+  border-bottom: 1px solid var(--accent-success);
   border-radius: 6px 6px 0 0;
 }
 
 .settings-header h3 {
   margin: 0;
-  color: #00ffaa;
+  color: var(--accent-success);
   font-size: 16px;
 }
 
 .close-settings {
   background: transparent;
-  color: #00ffaa;
+  color: var(--accent-success);
   border: none;
   font-size: 24px;
   cursor: pointer;
@@ -808,7 +808,7 @@ app-chat-history-sidebar {
 
 .close-settings:hover {
   background: rgba(255, 0, 0, 0.2);
-  color: #ff5555;
+  color: var(--accent-error);
 }
 
 .settings-content {
@@ -818,12 +818,12 @@ app-chat-history-sidebar {
 .setting-group {
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 .setting-label {
   display: block;
-  color: #00ffaa;
+  color: var(--accent-success);
   font-size: 14px;
   margin-bottom: 8px;
   font-weight: bold;
@@ -844,9 +844,9 @@ app-chat-history-sidebar {
 .setting-select {
   width: 100%;
   padding: 8px;
-  background: #1a1a1a;
-  color: #00ffaa;
-  border: 1px solid #00aa55;
+  background: var(--background-tertiary);
+  color: var(--accent-success);
+  border: 1px solid var(--accent-success);
   border-radius: 4px;
   font-family: 'Courier New', monospace;
   font-size: 13px;
@@ -859,7 +859,7 @@ app-chat-history-sidebar {
 }
 
 .setting-value {
-  color: #00ff00;
+  color: var(--text-primary);
   font-weight: bold;
   margin-left: 10px;
 }
@@ -882,9 +882,9 @@ app-chat-history-sidebar {
 }
 
 .settings-button.save {
-  background: #005500;
-  color: #00ffaa;
-  border: 1px solid #00aa55;
+  background: var(--button-hover);
+  color: var(--accent-success);
+  border: 1px solid var(--accent-success);
 }
 
 .settings-button.save:hover {
@@ -893,8 +893,8 @@ app-chat-history-sidebar {
 
 .settings-button.reset {
   background: transparent;
-  color: #ffaa00;
-  border: 1px solid #ffaa00;
+  color: var(--accent-warning);
+  border: 1px solid var(--accent-warning);
 }
 
 .settings-button.reset:hover {

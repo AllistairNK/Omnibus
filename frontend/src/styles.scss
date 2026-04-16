@@ -74,6 +74,8 @@ $light-theme: mat.m2-define-light-theme((
   --scrollbar-thumb-hover: #00cc00;
   --button-background: #003300;
   --button-hover: #005500;
+  --button-error-background: #330000;
+  --button-error-hover: #550000;
   --card-background: #111111;
   --card-shadow: rgba(0, 255, 0, 0.1);
   --input-background: #000000;
@@ -100,6 +102,8 @@ $light-theme: mat.m2-define-light-theme((
   --scrollbar-thumb-hover: #008000;
   --button-background: #d4edda;
   --button-hover: #c3e6cb;
+  --button-error-background: #ffcccc;
+  --button-error-hover: #ffaaaa;
   --card-background: #ffffff;
   --card-shadow: rgba(0, 100, 0, 0.1);
   --input-background: #ffffff;

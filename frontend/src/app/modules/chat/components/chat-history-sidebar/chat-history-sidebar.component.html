@@ -1,6 +1,6 @@
 <div class="chat-history-sidebar" [class.open]="isOpen" [class.closed]="!isOpen">
   <!-- Sidebar Header -->
-  <div class="sidebar-header">
+  <div class="sidebar-header" *ngIf="isOpen">
     <h3 class="sidebar-title">
       <span class="terminal-icon">📁</span>
       Chat History
@@ -93,17 +93,17 @@
   </div>
 
   <!-- Pagination -->
-  <div class="pagination" *ngIf="totalPages > 1">
-    <button 
-      class="page-btn" 
-      (click)="goToPage(currentPage - 1)" 
+  <div class="pagination" *ngIf="isOpen && totalPages > 1">
+    <button
+      class="page-btn"
+      (click)="goToPage(currentPage - 1)"
       [disabled]="currentPage === 1">
       ◀
     </button>
     <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-    <button 
-      class="page-btn" 
-      (click)="goToPage(currentPage + 1)" 
+    <button
+      class="page-btn"
+      (click)="goToPage(currentPage + 1)"
       [disabled]="currentPage === totalPages">
       ▶
     </button>

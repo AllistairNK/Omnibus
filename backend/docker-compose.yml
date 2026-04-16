@@ -11,7 +11,7 @@ services:
       - PERSIST_DIRECTORY=/chroma/chroma_data
       - ANONYMIZED_TELEMETRY=FALSE
     volumes:
-      - chroma_data:/chroma/chroma_data
+      - ./chroma_data:/chroma/chroma_data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/heartbeat"]
