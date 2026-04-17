@@ -81,6 +81,8 @@ $light-theme: mat.m2-define-light-theme((
   --input-background: #000000;
   --input-border: #333333;
   --input-focus: #00ff00;
+  --gradient-background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  --gradient-background-alt: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
 }
 
 :root[data-theme="light"], :root.light-theme {
@@ -109,6 +111,8 @@ $light-theme: mat.m2-define-light-theme((
   --input-background: #ffffff;
   --input-border: #cccccc;
   --input-focus: #006400;
+  --gradient-background: linear-gradient(135deg, #e6f3ff, #cce6ff, #99ccff);
+  --gradient-background-alt: linear-gradient(135deg, #f0f8ff 0%, #e6f0fa 100%);
 }
 
 // Global styles
