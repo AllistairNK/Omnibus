@@ -13,6 +13,7 @@ export class LoginComponent {
   loginForm: FormGroup;
   hidePassword = true;
   isLoading = false;
+  matrixMode = false;
 
   constructor(
     private fb: FormBuilder,
@@ -59,5 +60,10 @@ export class LoginComponent {
       this.snackBar.open('Bypass login successful! Using demo account.', 'Close', { duration: 3000 });
       this.router.navigate(['/chat']);
     }, 500);
+  }
+
+  onMatrixToggle() {
+    // Optional: any side effects when toggling
+    console.log('Matrix mode:', this.matrixMode);
   }
 }

@@ -1,9 +1,23 @@
-<div class="login-container">
+<div class="login-container" [class.digital-rain-bg]="matrixMode">
+  <app-digital-rain *ngIf="matrixMode" 
+    [active]="matrixMode"
+    [speed]="8"
+    [density]="60"
+    [characterSet]="'01ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@!%^&*()'"
+    [fontSize]="16"
+    [color]="'#0f0'"
+    [trailLength]="25">
+  </app-digital-rain>
   <mat-card class="login-card">
     <mat-card-header>
       <mat-card-title>Login to AI Chatbot</mat-card-title>
       <mat-card-subtitle>Enter your credentials to continue</mat-card-subtitle>
     </mat-card-header>
+    <div class="matrix-toggle">
+      <mat-slide-toggle [(ngModel)]="matrixMode" (change)="onMatrixToggle()" color="primary">
+        Matrix Mode
+      </mat-slide-toggle>
+    </div>
     <mat-card-content>
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
         <mat-form-field appearance="outline" class="full-width">

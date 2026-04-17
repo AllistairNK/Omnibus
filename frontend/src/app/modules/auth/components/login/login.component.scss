@@ -4,12 +4,31 @@
   align-items: center;
   min-height: 100vh;
   background: var(--gradient-background);
+  transition: background 0.3s ease;
+}
+
+.login-container.digital-rain-bg {
+  background: #000;
+  position: relative;
+  overflow: hidden;
 }
 
 .login-card {
   width: 100%;
   max-width: 400px;
   padding: 2rem;
+  position: relative;
+  z-index: 10;
+  background: var(--card-background);
+}
+
+app-digital-rain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
 .full-width {
@@ -28,4 +47,17 @@ mat-card-actions {
   gap: 1rem;
   margin-top: 1rem;
   justify-content: center;
+}
+
+.matrix-toggle {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+  padding: 0 1rem;
+}
+
+.matrix-toggle ::ng-deep .mat-slide-toggle-content {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: var(--text-primary);
 }
