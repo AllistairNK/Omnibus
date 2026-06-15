@@ -4,8 +4,8 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #0a0a0a;
-  color: #00ff00;
+  background-color: var(--background-primary);
+  color: var(--text-primary);
   font-family: 'Courier New', monospace;
   padding: 20px;
 }
@@ -13,18 +13,18 @@
 .dashboard-header {
   text-align: center;
   margin-bottom: 30px;
-  border-bottom: 2px solid #00ff00;
+  border-bottom: 2px solid var(--border-primary);
   padding-bottom: 20px;
 
   .ascii-art {
-    color: #00ff00;
+    color: var(--text-primary);
     font-size: 14px;
     line-height: 1.2;
-    text-shadow: 0 0 5px #00ff00;
+    text-shadow: 0 0 5px var(--text-primary);
   }
 
   .subtitle {
-    color: #00cc00;
+    color: var(--text-secondary);
     font-size: 14px;
     margin-top: 10px;
     opacity: 0.8;
@@ -33,10 +33,10 @@
 
 .admin-nav {
   margin-bottom: 30px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border-secondary);
 
   ::ng-deep .mat-tab-link {
-    color: #00ff00 !important;
+    color: var(--text-primary) !important;
     opacity: 0.7;
     font-family: 'Courier New', monospace;
     font-size: 14px;
@@ -44,13 +44,13 @@
 
     &:hover {
       opacity: 1;
-      background-color: rgba(0, 255, 0, 0.1);
+      background-color: color-mix(in srgb, var(--accent-primary) 10%, transparent);
     }
 
     &.mat-tab-label-active {
       opacity: 1;
-      color: #00ff00 !important;
-      border-bottom: 2px solid #00ff00;
+      color: var(--text-primary) !important;
+      border-bottom: 2px solid var(--border-primary);
     }
 
     .mat-icon {
@@ -65,15 +65,15 @@
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-  background-color: rgba(0, 0, 0, 0.5);
-  border: 1px solid #333;
+  background-color: color-mix(in srgb, var(--background-tertiary) 50%, transparent);
+  border: 1px solid var(--border-secondary);
   border-radius: 4px;
 }
 
 .dashboard-footer {
   margin-top: 30px;
   padding-top: 15px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--border-secondary);
   font-size: 12px;
 
   .footer-info {
@@ -84,7 +84,7 @@
     .status-indicator {
       display: flex;
       align-items: center;
-      color: #00ff00;
+      color: var(--text-primary);
 
       .status-dot {
         width: 8px;
@@ -93,22 +93,22 @@
         margin-right: 8px;
 
         &.active {
-          background-color: #00ff00;
-          box-shadow: 0 0 8px #00ff00;
+          background-color: var(--accent-primary);
+          box-shadow: 0 0 8px var(--accent-primary);
           animation: pulse 2s infinite;
         }
       }
     }
 
     .timestamp {
-      color: #00cc00;
+      color: var(--text-secondary);
       opacity: 0.7;
     }
   }
 
   .footer-warning {
     text-align: center;
-    color: #ff9900;
+    color: var(--accent-warning);
     font-size: 11px;
     opacity: 0.8;
   }

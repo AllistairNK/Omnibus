@@ -1,0 +1,68 @@
+<div class="admin-health-container">
+  <h2>System Health</h2>
+
+  <div *ngIf="error" class="error-card">
+    <mat-card>
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <span>{{ error }}</span>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div *ngIf="!loading && !error && health">
+    <div class="health-summary">
+      <mat-card [class]="getStatusClass(health.status)">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>{{ getStatusIcon(health.status) }}</mat-icon>
+            Overall Status: {{ health.status | uppercase }}
+          </mat-card-title>
+          <mat-card-subtitle>
+            Last updated: {{ lastUpdated | date:'yyyy-MM-dd HH:mm:ss' }}
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p>{{ health.issues?.length || 0 }} issues detected</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="components-section">
+      <h3>Component Status</h3>
+      <div class="components-grid">
+        <mat-card *ngFor="let component of getComponents()" [class]="getComponentStatusClass(component.status)">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>{{ getComponentIcon(component.status) }}</mat-icon>
+              {{ component.name }}
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p>Status: {{ component.status }}</p>
+            <p *ngIf="component.details">{{ component.details }}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <div class="metrics-section" *ngIf="health.metrics">
+      <h3>System Metrics</h3>
+      <pre>{{ health.metrics | json }}</pre>
+    </div>
+
+    <div class="issues-section" *ngIf="health.issues && health.issues.length > 0">
+      <h3>Issues</h3>
+      <mat-list>
+        <mat-list-item *ngFor="let issue of health.issues">
+          <mat-icon matListItemIcon color="warn">warning</mat-icon>
+          <div matListItemTitle>{{ issue }}</div>
+        </mat-list-item>
+      </mat-list>
+    </div>
+  </div>
+</div>

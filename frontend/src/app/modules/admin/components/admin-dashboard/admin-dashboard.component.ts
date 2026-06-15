@@ -14,6 +14,8 @@ export class AdminDashboardComponent implements OnInit {
     { path: 'health', label: 'System Health', icon: 'monitor_heart' },
   ];
 
+  currentTime = new Date();
+
   constructor(private router: Router) {}
 
   ngOnInit(): void {
@@ -21,5 +23,10 @@ export class AdminDashboardComponent implements OnInit {
     if (this.router.url === '/admin' || this.router.url === '/admin/') {
       this.router.navigate(['/admin/stats']);
     }
+    
+    // Update time every minute
+    setInterval(() => {
+      this.currentTime = new Date();
+    }, 60000);
   }
 }

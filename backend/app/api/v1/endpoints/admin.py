@@ -5,11 +5,12 @@ import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user, require_admin
 from app.core.supabase import SupabaseClient
+from app.services.audit_service import get_document_audit_log
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -87,7 +88,7 @@ async def get_system_stats(
         users_count = supabase._client.table("users").select("*", count="exact").execute()
         documents_count = supabase._client.table("documents").select("*", count="exact").execute()
         chats_count = supabase._client.table("chats").select("*", count="exact").execute()
-        messages_count = supabase._client.table("chat_messages").select("*", count="exact").execute()
+        messages_count = supabase._client.table("messages").select("*", count="exact").execute()
         
         # Calculate 24-hour active users (users with activity in last 24 hours)
         twenty_four_hours_ago = (datetime.now() - timedelta(hours=24)).isoformat()
@@ -97,8 +98,8 @@ async def get_system_stats(
         new_users = supabase._client.table("users").select("*", count="exact").gte("created_at", twenty_four_hours_ago).execute()
         
         # Estimate storage used (rough calculation)
-        storage_result = supabase._client.table("documents").select("file_size_bytes").execute()
-        storage_used_bytes = sum(doc.get("file_size_bytes", 0) for doc in storage_result.data)
+        storage_result = supabase._client.table("documents").select("file_size").execute()
+        storage_used_bytes = sum(doc.get("file_size", 0) for doc in storage_result.data)
         storage_used_mb = storage_used_bytes / (1024 * 1024)
         
         # For now, use placeholder values for API calls and response time
@@ -126,7 +127,7 @@ async def get_system_stats(
 
 
 @router.get("/document-audit", response_model=DocumentAuditResponse)
-async def get_document_audit_log(
+async def get_document_audit_endpoint(
     page: int = 1,
     page_size: int = 50,
     document_id: Optional[str] = None,
@@ -137,68 +138,19 @@ async def get_document_audit_log(
     """
     Get document audit log (admin only).
     
-    Returns audit trail of document-related actions.
+    Returns paginated audit trail of document-related actions
+    (upload, delete, view, update) from the document_audit_log table.
+    Supports filtering by document_id, user_id, and action.
     """
     try:
-        supabase = SupabaseClient()
-        if not supabase._client:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Supabase client not initialized",
-            )
-        
-        # Calculate pagination
-        start_idx = (page - 1) * page_size
-        end_idx = start_idx + page_size - 1
-        
-        # Build query
-        query = supabase._client.table("document_audit_log").select("*")
-        
-        if document_id:
-            query = query.eq("document_id", document_id)
-        if user_id:
-            query = query.eq("user_id", user_id)
-        if action:
-            query = query.eq("action", action)
-        
-        # Order by timestamp descending (most recent first)
-        query = query.order("timestamp", desc=True)
-        
-        # Apply pagination
-        audit_data = query.range(start_idx, end_idx).execute()
-        
-        # Get total count
-        count_query = supabase._client.table("document_audit_log").select("*", count="exact")
-        if document_id:
-            count_query = count_query.eq("document_id", document_id)
-        if user_id:
-            count_query = count_query.eq("user_id", user_id)
-        if action:
-            count_query = count_query.eq("action", action)
-        
-        count_result = count_query.execute()
-        total = count_result.count if hasattr(count_result, 'count') else len(audit_data.data)
-        
-        # Format response
-        entries = []
-        for entry in audit_data.data:
-            entries.append({
-                "id": entry.get("id", ""),
-                "document_id": entry.get("document_id", ""),
-                "user_id": entry.get("user_id", ""),
-                "action": entry.get("action", ""),
-                "timestamp": entry.get("timestamp", ""),
-                "details": entry.get("details", {}),
-                "ip_address": entry.get("ip_address"),
-                "user_agent": entry.get("user_agent"),
-            })
-        
-        return {
-            "entries": entries,
-            "total": total,
-            "page": page,
-            "page_size": page_size,
-        }
+        result = await get_document_audit_log(
+            page=page,
+            page_size=page_size,
+            document_id=document_id,
+            user_id=user_id,
+            action=action,
+        )
+        return result
     except Exception as e:
         logger.error(f"Error fetching document audit log: {e}")
         raise HTTPException(

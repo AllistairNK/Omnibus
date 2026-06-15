@@ -64,14 +64,29 @@ class ResetPasswordRequest(BaseModel):
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
+def _get_user_custom_role(user_id: str) -> str:
+    """Fetch custom role from users table."""
+    try:
+        supabase = SupabaseClient()
+        result = supabase.client.table("users").select("role").eq("id", user_id).execute()
+        if result.data and len(result.data) > 0:
+            return result.data[0].get("role", "user")
+    except Exception as e:
+        logger.warning(f"Failed to fetch custom role for user {user_id}: {e}")
+    return "user"
+
 def _serialize_user(user) -> Dict[str, Any]:
     """Convert a supabase-py v2 User object to a plain dict."""
     if user is None:
         return {}
+    
+    # Get custom role from users table
+    custom_role = _get_user_custom_role(str(user.id))
+    
     return {
         "id": str(user.id),
         "email": user.email,
-        "role": user.role,
+        "role": custom_role,  # Use custom role from users table, not Supabase auth role
         "app_metadata": user.app_metadata or {},
         "user_metadata": user.user_metadata or {},
     }
@@ -179,10 +194,13 @@ async def get_current_user(token: str = Depends(security)) -> UserResponse:
             detail="Not authenticated",
         )
 
+    # Get custom role from users table
+    custom_role = _get_user_custom_role(str(user.id))
+
     return UserResponse(
         id=str(user.id),
         email=user.email,
-        role=user.role,
+        role=custom_role,  # Use custom role from users table
         app_metadata=user.app_metadata,
         user_metadata=user.user_metadata,
     )

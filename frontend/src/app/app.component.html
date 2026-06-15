@@ -32,6 +32,9 @@ MMMMMMMMMM
         <a mat-button routerLink="/settings" routerLinkActive="active" aria-label="Settings">
           Settings
         </a>
+        <a *ngIf="(isAuthenticated$ | async) && (user$ | async)?.role === 'admin'" mat-button routerLink="/admin" routerLinkActive="active" aria-label="Admin Dashboard">
+          Admin
+        </a>
         <a *ngIf="!(isAuthenticated$ | async)" mat-button routerLink="/auth/login" routerLinkActive="active" aria-label="Login">
           Login
         </a>

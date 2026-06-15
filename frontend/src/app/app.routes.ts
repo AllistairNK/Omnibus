@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
+import { AdminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -20,6 +21,11 @@ export const routes: Routes = [
     path: 'settings',
     loadChildren: () => import('./modules/settings/settings.module').then(m => m.SettingsModule),
     canActivate: [AuthGuard]
+  },
+  {
+    path: 'admin',
+    loadChildren: () => import('./modules/admin/admin.module').then(m => m.AdminModule),
+    canActivate: [AuthGuard, AdminGuard]
   },
   { path: '', redirectTo: '/chat', pathMatch: 'full' },
   { path: '**', redirectTo: '/chat' }

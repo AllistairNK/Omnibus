@@ -29,6 +29,8 @@ class UserProfileResponse(BaseModel):
     email: str
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
+    role: str = "user"
+    is_active: bool = True
     created_at: str
     updated_at: str
     metadata: Dict[str, Any] = {}
@@ -303,7 +305,7 @@ async def get_user_by_id(
         )
 
 
-@router.get("/", response_model=UserListResponse)
+@router.get("", response_model=UserListResponse)
 async def list_users(
     page: int = 1,
     page_size: int = 20,
@@ -348,6 +350,8 @@ async def list_users(
                 "email": user_data.get("email", ""),
                 "display_name": user_data.get("display_name"),
                 "avatar_url": user_data.get("avatar_url"),
+                "role": user_data.get("role", "user"),
+                "is_active": user_data.get("is_active", True),
                 "created_at": user_data.get("created_at", ""),
                 "updated_at": user_data.get("updated_at", ""),
                 "metadata": user_data.get("metadata", {}),

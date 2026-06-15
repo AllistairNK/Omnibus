@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.core.supabase import SupabaseClient
+from app.services.audit_service import log_document_action
 from app.services.document_processor import DocumentProcessor
 
 router = APIRouter()
@@ -315,6 +316,18 @@ async def upload_document(
         
         created_doc = result.data[0]
         
+        # Log audit entry for document upload
+        await log_document_action(
+            document_id=created_doc["id"],
+            user_id=user_id,
+            action="upload",
+            details={
+                "filename": filename,
+                "file_size": file_size,
+                "file_type": file_ext,
+            },
+        )
+        
         # Add background task to process the document
         background_tasks.add_task(
             process_document_background,
@@ -543,6 +556,17 @@ async def delete_document(
         
         # Delete the document (cascade will delete related chunks)
         supabase._client.table("documents").delete().eq("id", document_id).eq("user_id", user_id).execute()
+        
+        # Log audit entry for document deletion
+        await log_document_action(
+            document_id=document_id,
+            user_id=user_id,
+            action="delete",
+            details={
+                "filename": doc.get("filename"),
+                "file_type": doc.get("file_type"),
+            },
+        )
         
         # Return 204 No Content
         return None

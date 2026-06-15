@@ -51,15 +51,15 @@ def create_application() -> FastAPI:
         redirect_slashes=False,
     )
 
-    # Set up CORS
-    if settings.BACKEND_CORS_ORIGINS:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+    # Set up CORS - allow all origins in development
+    # Note: In production, you should restrict this to specific origins
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     # Add custom middleware
     app.add_middleware(RequestLoggingMiddleware)

@@ -1,0 +1,29 @@
+.admin-documents-container {
+  padding: 20px;
+  color: var(--text-primary);
+}
+
+.filters-section {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.error-card {
+  margin-bottom: 20px;
+  background-color: color-mix(in srgb, var(--accent-error) 10%, var(--background-secondary));
+  border-left: 4px solid var(--accent-error);
+  color: var(--text-primary);
+  padding: 16px;
+}

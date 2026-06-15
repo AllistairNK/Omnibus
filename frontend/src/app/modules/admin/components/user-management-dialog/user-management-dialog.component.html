@@ -1,0 +1,29 @@
+<h2 mat-dialog-title>Manage User</h2>
+
+<mat-dialog-content>
+  <div class="user-info">
+    <p><strong>ID:</strong> {{ data.user.id }}</p>
+    <p><strong>Email:</strong> {{ data.user.email }}</p>
+  </div>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Role</mat-label>
+    <mat-select [(ngModel)]="selectedRole">
+      <mat-option *ngFor="let role of roles" [value]="role">
+        {{ role }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-slide-toggle [(ngModel)]="isActive" class="full-width">
+    Active
+  </mat-slide-toggle>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="loading">
+    <span *ngIf="!loading">Save</span>
+    <span *ngIf="loading">Saving...</span>
+  </button>
+</mat-dialog-actions>

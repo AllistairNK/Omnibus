@@ -17,6 +17,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { AdminRoutingModule } from './admin-routing.module';
@@ -59,6 +62,9 @@ import { UserManagementDialogComponent } from './components/user-management-dial
     MatInputModule,
     MatSelectModule,
     MatSnackBarModule,
+    MatMenuModule,
+    MatSlideToggleModule,
+    MatSliderModule,
   ]
 })
 export class AdminModule { }

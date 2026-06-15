@@ -1,0 +1,38 @@
+.admin-health-container {
+  padding: 20px;
+  color: var(--text-primary);
+}
+
+.health-summary {
+  margin-bottom: 30px;
+}
+
+.components-section {
+  margin-bottom: 30px;
+}
+
+.components-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.metrics-section,
+.issues-section {
+  margin-top: 30px;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.error-card {
+  margin-bottom: 20px;
+  background-color: color-mix(in srgb, var(--accent-error) 10%, var(--background-secondary));
+  border-left: 4px solid var(--accent-error);
+  color: var(--text-primary);
+  padding: 16px;
+}

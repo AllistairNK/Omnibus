@@ -102,11 +102,14 @@ async def get_current_user(
     # Ensure user exists in our users table
     await ensure_user_exists(token_data.sub, token_data.email)
     
+    # Get custom role from database (overrides JWT role)
+    db_role = await _get_user_role_from_db(token_data.sub)
+    
     # Return user info with access_token for Supabase client operations
     return {
         "id": token_data.sub,
         "email": token_data.email,
-        "role": token_data.role,
+        "role": db_role,  # Use database role instead of JWT role
         "app_metadata": token_data.app_metadata,
         "user_metadata": token_data.user_metadata,
         "access_token": access_token,
@@ -135,6 +138,30 @@ async def require_admin(
             detail="Insufficient permissions",
         )
     return current_user
+
+
+async def _get_user_role_from_db(user_id: str) -> str:
+    """
+    Get user role from database.
+    
+    Args:
+        user_id: The user's ID
+        
+    Returns:
+        Role string ('user' or 'admin'), defaults to 'user' if not found
+    """
+    try:
+        supabase = SupabaseClient()
+        if not supabase._client:
+            logger.warning("Supabase client not initialized, cannot fetch user role")
+            return "user"
+        
+        result = supabase._client.table("users").select("role").eq("id", user_id).execute()
+        if result.data and len(result.data) > 0:
+            return result.data[0].get("role", "user")
+    except Exception as e:
+        logger.warning(f"Failed to fetch role for user {user_id}: {e}")
+    return "user"
 
 
 async def ensure_user_exists(user_id: str, email: str) -> None:

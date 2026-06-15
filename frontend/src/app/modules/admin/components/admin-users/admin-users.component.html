@@ -1,0 +1,126 @@
+<div class="admin-users-container">
+  <div class="header">
+    <h2>User Management</h2>
+    <div class="actions">
+      <button mat-raised-button color="primary" (click)="refresh()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <mat-card *ngIf="error" class="error-card">
+    <mat-card-content>
+      <div class="error-message">
+        <mat-icon color="warn">error</mat-icon>
+        <span>{{ error }}</span>
+      </div>
+      <button mat-button (click)="refresh()">Retry</button>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading users...</p>
+  </div>
+
+  <div *ngIf="!loading && users.length === 0" class="empty-state">
+    <mat-icon>people</mat-icon>
+    <h3>No users found</h3>
+    <p>There are no users in the system yet.</p>
+  </div>
+
+  <div *ngIf="!loading && users.length > 0" class="users-table-container">
+    <table mat-table [dataSource]="users" class="mat-elevation-z1">
+      <!-- ID Column -->
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef>ID</th>
+        <td mat-cell *matCellDef="let user">{{ user.id | slice:0:8 }}...</td>
+      </ng-container>
+
+      <!-- Email Column -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+      </ng-container>
+
+      <!-- Role Column -->
+      <ng-container matColumnDef="role">
+        <th mat-header-cell *matHeaderCellDef>Role</th>
+        <td mat-cell *matCellDef="let user">
+          <mat-chip-listbox>
+            <mat-chip [color]="user.role === 'admin' ? 'primary' : 'default'">
+              {{ user.role }}
+            </mat-chip>
+          </mat-chip-listbox>
+        </td>
+      </ng-container>
+
+      <!-- Created At Column -->
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef>Created</th>
+        <td mat-cell *matCellDef="let user">{{ user.created_at | date:'medium' }}</td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let user">
+          <div class="action-buttons">
+            <button mat-icon-button [matMenuTriggerFor]="roleMenu" [matMenuTriggerData]="{user: user}">
+              <mat-icon>admin_panel_settings</mat-icon>
+            </button>
+            <mat-menu #roleMenu="matMenu">
+              <button mat-menu-item (click)="updateUserRole(user, 'admin')" *ngIf="user.role !== 'admin'">
+                <mat-icon>shield</mat-icon>
+                <span>Make Admin</span>
+              </button>
+              <button mat-menu-item (click)="updateUserRole(user, 'user')" *ngIf="user.role === 'admin'">
+                <mat-icon>person</mat-icon>
+                <span>Make Regular User</span>
+              </button>
+              <button mat-menu-item (click)="toggleUserStatus(user)">
+                <mat-icon>{{ user.is_active ? 'block' : 'check_circle' }}</mat-icon>
+                <span>{{ user.is_active ? 'Deactivate' : 'Activate' }}</span>
+              </button>
+            </mat-menu>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator [length]="totalUsers"
+                   [pageSize]="pageSize"
+                   [pageSizeOptions]="[10, 20, 50]"
+                   (page)="onPageChange($event)"
+                   showFirstLastButtons>
+    </mat-paginator>
+  </div>
+
+  <div class="stats-summary">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>User Statistics</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">{{ totalUsers }}</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ adminCount }}</div>
+            <div class="stat-label">Admins</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ activeCount }}</div>
+            <div class="stat-label">Active Users</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

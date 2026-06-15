@@ -1,0 +1,100 @@
+<div class="admin-stats-container">
+  <h2>System Statistics</h2>
+
+  <div *ngIf="error" class="error-card">
+    <mat-card>
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <span>{{ error }}</span>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div *ngIf="!loading && !error && stats" class="stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>people</mat-icon>
+          Users
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ stats.total_users }}</div>
+        <div class="stat-subtitle">Total Users</div>
+        <div class="stat-detail">Active (24h): {{ stats.active_users_24h }}</div>
+        <div class="stat-detail">New (24h): {{ stats.new_users_24h }}</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>description</mat-icon>
+          Documents
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ stats.total_documents }}</div>
+        <div class="stat-subtitle">Total Documents</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>chat</mat-icon>
+          Chats
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ stats.total_chats }}</div>
+        <div class="stat-subtitle">Total Chats</div>
+        <div class="stat-detail">Messages: {{ stats.total_messages }}</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>storage</mat-icon>
+          Storage
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ stats.storage_used_mb }} MB</div>
+        <div class="stat-subtitle">Storage Used</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>api</mat-icon>
+          API Usage
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ stats.api_calls_24h }}</div>
+        <div class="stat-subtitle">API Calls (24h)</div>
+        <div class="stat-detail">Avg Response: {{ stats.avg_response_time_ms }}ms</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>trending_up</mat-icon>
+          Performance
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-value">{{ stats.avg_response_time_ms }}ms</div>
+        <div class="stat-subtitle">Avg Response Time</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
