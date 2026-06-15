@@ -94,6 +94,14 @@ export class AuthService {
     );
   }
 
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post('/api/v1/auth/forgot-password', { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.http.post('/api/v1/auth/reset-password', { token, new_password: newPassword });
+  }
+
   isAuthenticated(): boolean {
     return this.hasToken();
   }

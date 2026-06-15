@@ -6,8 +6,10 @@ from typing import Any, Dict, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
+from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr, Field
 
+from app.core.config import settings
 from app.core.supabase import SupabaseClient
 from app.core.auth import ensure_user_exists
 
@@ -209,10 +211,29 @@ async def get_current_user(token: str = Depends(security)) -> UserResponse:
 @router.post("/forgot-password", response_model=MessageResponse)
 async def forgot_password(request: ForgotPasswordRequest) -> MessageResponse:
     supabase = SupabaseClient()
+    frontend_origin = (
+        str(settings.BACKEND_CORS_ORIGINS[0]).rstrip("/")
+        if settings.BACKEND_CORS_ORIGINS
+        else "http://localhost:4200"
+    )
+    redirect_to = f"{frontend_origin}/auth/forgot-password"
     try:
-        supabase.client.auth.reset_password_for_email(request.email)
+        supabase.client.auth.reset_password_for_email(
+            request.email,
+            {"redirect_to": redirect_to},
+        )
     except Exception as e:
+        error_msg = str(e).lower()
         logger.warning(f"Password reset request failed for {request.email}: {e}")
+        if "rate limit" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many password reset attempts. Please wait a while before trying again.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send password reset email. Please try again later.",
+        )
     return MessageResponse(
         message="If an account with that email exists, a password reset link has been sent."
     )
@@ -220,7 +241,26 @@ async def forgot_password(request: ForgotPasswordRequest) -> MessageResponse:
 
 @router.post("/reset-password", response_model=MessageResponse)
 async def reset_password(request: ResetPasswordRequest) -> MessageResponse:
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Password reset via token is not yet implemented.",
-    )
+    try:
+        payload = jwt.decode(
+            request.token,
+            settings.SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            options={"verify_aud": False},
+        )
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    supabase = SupabaseClient()
+    try:
+        supabase.admin_client.auth.admin.update_user_by_id(
+            user_id, {"password": request.new_password}
+        )
+    except Exception as e:
+        logger.error(f"Password update failed for user {user_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update password")
+
+    return MessageResponse(message="Password updated successfully.")

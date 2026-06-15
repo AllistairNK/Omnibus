@@ -5,7 +5,6 @@ Includes Sentry integration, performance monitoring, and metrics collection.
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.loguru import LoguruIntegration
 from loguru import logger
@@ -31,7 +30,6 @@ def configure_sentry() -> None:
             integrations=[
                 FastApiIntegration(),
                 StarletteIntegration(),
-                SqlalchemyIntegration(),
                 HttpxIntegration(),
                 LoguruIntegration(),
             ],

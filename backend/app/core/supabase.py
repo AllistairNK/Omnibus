@@ -69,6 +69,13 @@ class SupabaseClient:
             raise RuntimeError("Supabase storage client not initialized.")
         return self._storage_client
 
+    @property
+    def admin_client(self) -> Client:
+        """Get the service-role Supabase client for admin operations (bypasses RLS)."""
+        if self._storage_client is None:
+            raise RuntimeError("Supabase admin client not initialized. Ensure SUPABASE_SERVICE_ROLE_KEY is set.")
+        return self._storage_client
+
     # Authentication methods
     async def sign_up(self, email: str, password: str) -> Dict[str, Any]:
         """Sign up a new user."""

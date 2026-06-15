@@ -1,0 +1,44 @@
+services:
+  chromadb:
+    image: chromadb/chroma:latest
+    restart: unless-stopped
+    environment:
+      - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.token.TokenConfigServerAuthCredentialsProvider
+      - ANONYMIZED_TELEMETRY=false
+    volumes:
+      - chroma_data:/chroma/chroma
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - ENVIRONMENT=production
+      - DEBUG=false
+    depends_on:
+      chromadb:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  chroma_data:
+    name: omnibus_chroma_data
